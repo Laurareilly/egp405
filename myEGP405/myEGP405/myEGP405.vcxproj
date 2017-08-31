@@ -23,7 +23,7 @@
     <ProjectGuid>{A775E0F6-24CA-4E27-BA85-1D9EED61F00D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>myEGP405</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
