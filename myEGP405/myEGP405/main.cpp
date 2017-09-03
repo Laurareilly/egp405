@@ -1,5 +1,5 @@
 /*
-This file was created by Laura Reilly using tutorials from http://www.jenkinssoftware.com/raknet/manual/tutorialsample3.html 
+This file was created by Laura Reilly (0972157) using tutorials from http://www.jenkinssoftware.com/raknet/manual/tutorialsample3.html 
 I certify that this work is entirely my own.  
 The assessor of this project may reproduce this project 
 and provide copies to other academic staff, and/or communicate 
@@ -7,9 +7,10 @@ a copy of this project to a plagiarism-checking service,
 which may retain a copy of the project on its database.”
 */
 
+#include "PacketStructs.h"
 #include <iostream>
 #include <stdio.h>
-#include "PacketStructs.h"
+#include <conio.h>
 
 using namespace std;
 
@@ -20,6 +21,7 @@ int main()
 	RakPeerInterface *peer = RakPeerInterface::GetInstance();
 	bool isServer;
 	Packet *packet;
+	string username; 
 
 	string choice;
 	cout << "(C) or (S)erver?\n";
@@ -61,13 +63,30 @@ int main()
 		{
 			answer = "127.0.0.1";
 		}
+		
+		cout << "Enter a username" << endl;
+		getline(cin, username);
+
 		cout << "Starting the client\n";
-		cout << "answer: " << answer.c_str();
 		peer->Connect(answer.c_str(), serverPort, 0, 0); //these 2 zeros are for password data and length, guessing they're 0 cus we don't have any
 	}
 
-	while (1)
+	while (true)
 	{
+		if (_kbhit() && isServer == false) //will wait for a key press, downside is you can't receive messages while you're typing
+										  // not sure what that solve would really be
+		{
+			UserMessage message;
+			getline(cin, message.message);
+			message.userName = username;
+			message.timeStamp = GetTime();
+
+			BitStream bsOut;
+			bsOut.Write((MessageID)ID_USER_MESSAGE);
+			bsOut.Write((char*)&message, sizeof(message));
+			peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_RAKNET_GUID, true);
+		}
+
 		for (packet = peer->Receive(); packet; peer->DeallocatePacket(packet), packet = peer->Receive())
 		{
 			switch (packet->data[0])
@@ -84,15 +103,6 @@ int main()
 			case ID_CONNECTION_REQUEST_ACCEPTED:
 			{
 				cout << "Our connection request has been accepted.\n";
-				UserMessage message;
-				message.message = "peepee";
-				message.userName = "dan buckstein";
-				message.timeStamp =  GetTime();
-				
-				BitStream bsOut;        
-				bsOut.Write(ID_USER_MESSAGE);
-				bsOut.Write(message);
-				peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 			}
 				break;
 			case ID_NEW_INCOMING_CONNECTION:
@@ -122,18 +132,17 @@ int main()
 				}
 				break;
 			case ID_CONNECTION_ATTEMPT_FAILED:
-				cout << "YOU SUCK and you're doing something wrong\n";
+				cout << "Could not connect.\n";
 				break;
-			//case ID_USER_MESSAGE:
-			//{
-			//	cout << "this should come out?" << endl;
-			//	UserMessage message;
-			//	BitStream bsIn(packet->data, packet->length, false);
-			//	bsIn.IgnoreBytes(sizeof(MessageID));
-			//	bsIn.Read(message);
-			//	cout << message.userName << ": " << message.message << endl;
-			//}
-			//	break;
+			case ID_USER_MESSAGE:
+			{
+				UserMessage message;
+				BitStream bsIn(packet->data, packet->length, false);
+				bsIn.IgnoreBytes(sizeof(MessageID));
+				bsIn.Read((char*)&message, sizeof(message));
+				cout << message.userName << ": " << message.message << endl;
+			}
+				break;
 			default:
 				cout << "Message with identifier " << (int)(packet->data[0]) << " has arrived.\n";
 				break;
