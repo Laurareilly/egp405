@@ -1,11 +1,17 @@
+/*
+This file was created by Laura Reilly using tutorials from http://www.jenkinssoftware.com/raknet/manual/tutorialsample3.html 
+I certify that this work is entirely my own.  
+The assessor of this project may reproduce this project 
+and provide copies to other academic staff, and/or communicate 
+a copy of this project to a plagiarism-checking service, 
+which may retain a copy of the project on its database.”
+*/
+
 #include <iostream>
 #include <stdio.h>
-#include <string>
-#include "../../../DevSDKs/DevSDKs/include/RakNet/RakPeerInterface.h" //this needs to be fixed
-#include "../../../DevSDKs/DevSDKs/include/RakNet/MessageIdentifiers.h" //so does this
+#include "PacketStructs.h"
 
 using namespace std;
-using namespace RakNet;
 
 int main()
 {
@@ -53,10 +59,10 @@ int main()
 		getline(cin, answer);
 		if (answer == "")
 		{
-			//answer = "127.0.0.1";
-			answer = "10.0.0.1"; //this one is my house
+			answer = "127.0.0.1";
 		}
 		cout << "Starting the client\n";
+		cout << "answer: " << answer.c_str();
 		peer->Connect(answer.c_str(), serverPort, 0, 0); //these 2 zeros are for password data and length, guessing they're 0 cus we don't have any
 	}
 
@@ -76,7 +82,18 @@ int main()
 				cout << "Another client has connected.\n";
 				break;
 			case ID_CONNECTION_REQUEST_ACCEPTED:
+			{
 				cout << "Our connection request has been accepted.\n";
+				UserMessage message;
+				message.message = "peepee";
+				message.userName = "dan buckstein";
+				message.timeStamp =  GetTime();
+				
+				BitStream bsOut;        
+				bsOut.Write(ID_USER_MESSAGE);
+				bsOut.Write(message);
+				peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+			}
 				break;
 			case ID_NEW_INCOMING_CONNECTION:
 				cout << "A connection is incoming.\n";
@@ -104,16 +121,26 @@ int main()
 					cout << "Connection lost.\n";
 				}
 				break;
+			case ID_CONNECTION_ATTEMPT_FAILED:
+				cout << "YOU SUCK and you're doing something wrong\n";
+				break;
+			//case ID_USER_MESSAGE:
+			//{
+			//	cout << "this should come out?" << endl;
+			//	UserMessage message;
+			//	BitStream bsIn(packet->data, packet->length, false);
+			//	bsIn.IgnoreBytes(sizeof(MessageID));
+			//	bsIn.Read(message);
+			//	cout << message.userName << ": " << message.message << endl;
+			//}
+			//	break;
 			default:
-				cout << "Message with identifier " << packet->data[0] << " has arrived.\n";
+				cout << "Message with identifier " << (int)(packet->data[0]) << " has arrived.\n";
 				break;
 			}
 		}
 	}
 
 	RakPeerInterface::DestroyInstance(peer);
-
-	cin.get();
-	cin.ignore();
 	return 0;
 }
