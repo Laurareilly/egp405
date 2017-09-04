@@ -23,18 +23,19 @@ using namespace std;
 
 enum GameMessage
 {
-	ID_USER_MESSAGE = ID_USER_PACKET_ENUM + 1,
-	ID_MESSAGE_SENT,
-	ID_MESSAGE_RECEIVED
+	ID_MESSAGE_SENT = ID_USER_PACKET_ENUM + 1, //What the client sends to the server
+	ID_MESSAGE_RECEIVED //What the server sends to the client
 };
 
 #pragma pack(push, 1)
 struct UserMessage
 {
-	unsigned char typeId = ID_USER_MESSAGE;
-	string message;
-	string userName;
-	Time timeStamp;
 	unsigned char useTimeStamp;
+	Time timeStamp;
+	unsigned char typeId = ID_MESSAGE_SENT;
+	RakString message;
+	RakString userName;
+	NetworkID networkID;
+	SystemAddress systemAddress;
 };
 #pragma pack(pop)

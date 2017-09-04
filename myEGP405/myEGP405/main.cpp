@@ -30,6 +30,7 @@ int main()
 	cout << "Enter the server port number\n";
 	string serverPortString;
 	getline(cin, serverPortString);
+	if (serverPortString == "") serverPortString = "60000";
 	serverPort = stoi(serverPortString);
 
 	if (choice == "c" || choice == "C") //if we're starting a client
@@ -43,6 +44,7 @@ int main()
 		cout << "Enter the max amount of clients\n";
 		string maxClientsString; 
 		getline(cin, maxClientsString);
+		if (maxClientsString == "") maxClientsString = "10";
 		maxClients = stoi(maxClientsString);
 		SocketDescriptor sd(serverPort, 0);
 		peer->Startup(maxClients, &sd, 1);
@@ -64,11 +66,11 @@ int main()
 			answer = "127.0.0.1";
 		}
 		
-		cout << "Enter a username" << endl;
-		getline(cin, username);
-
 		cout << "Starting the client\n";
 		peer->Connect(answer.c_str(), serverPort, 0, 0); //these 2 zeros are for password data and length, guessing they're 0 cus we don't have any
+
+		cout << "Enter a username" << endl;
+		getline(cin, username);
 	}
 
 	while (true)
@@ -76,18 +78,25 @@ int main()
 		if (_kbhit() && isServer == false) //will wait for a key press, downside is you can't receive messages while you're typing
 										  // not sure what that solve would really be
 		{
+			//clients can type in a message and it'll store what they say in the struct's data
 			UserMessage message;
-			getline(cin, message.message);
-			message.userName = username;
+			string tempMessageString;
+			cout << username << ": ";
+			getline(cin, tempMessageString);
+			message.message = tempMessageString.c_str();
+			message.userName = username.c_str();
 			message.timeStamp = GetTime();
 
 			BitStream bsOut;
-			bsOut.Write((MessageID)ID_USER_MESSAGE);
-			bsOut.Write((char*)&message, sizeof(message));
-			peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_RAKNET_GUID, true);
+			bsOut.Write((MessageID)ID_MESSAGE_SENT);
+			//bsOut.Write((char*)&message, sizeof(message));
+			bsOut.Write(message.userName);
+			bsOut.Write(message.message);
+			bsOut.Write(message.timeStamp);
+			peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 		}
 
-		for (packet = peer->Receive(); packet; peer->DeallocatePacket(packet), packet = peer->Receive())
+		for (packet = peer->Receive(); packet; peer->DeallocatePacket(packet), packet = peer->Receive()) //gross for loop basically initiates a packet, makes sure not null, goes to next packet if there is one
 		{
 			switch (packet->data[0])
 			{
@@ -134,15 +143,38 @@ int main()
 			case ID_CONNECTION_ATTEMPT_FAILED:
 				cout << "Could not connect.\n";
 				break;
-			case ID_USER_MESSAGE:
+			case ID_MESSAGE_SENT:
 			{
 				UserMessage message;
 				BitStream bsIn(packet->data, packet->length, false);
 				bsIn.IgnoreBytes(sizeof(MessageID));
-				bsIn.Read((char*)&message, sizeof(message));
+				//bsIn.Read((char*)&message, sizeof(message));
+				bsIn.Read(message.userName);
+				bsIn.Read(message.message);
+				bsIn.Read(message.timeStamp);
+				cout << message.userName << ": " << message.message << endl;
+
+				BitStream bsOut;
+				bsOut.Write((MessageID)ID_MESSAGE_RECEIVED);
+				//bsOut.Write((char*)&message, sizeof(message));
+				bsOut.Write(message.userName);
+				bsOut.Write(message.message);
+				bsOut.Write(message.timeStamp);
+				peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true);	//packet->systemAddress	
+				break;
+			}
+			case ID_MESSAGE_RECEIVED:
+			{
+				UserMessage message;
+				BitStream bsIn(packet->data, packet->length, false);
+				bsIn.IgnoreBytes(sizeof(MessageID));
+				//bsIn.Read((char*)&message, sizeof(message)); //WHY DOESN'T THIS WORK
+				bsIn.Read(message.userName);
+				bsIn.Read(message.message);
+				bsIn.Read(message.timeStamp);
 				cout << message.userName << ": " << message.message << endl;
 			}
-				break;
+			break;
 			default:
 				cout << "Message with identifier " << (int)(packet->data[0]) << " has arrived.\n";
 				break;
