@@ -10,6 +10,23 @@ enum GameMessages
 	ID_GAME_MESSAGE_1 = ID_USER_PACKET_ENUM + 1 //End of the raknet reserve headers so now we can make our own
 };
 
+
+//custom data structure
+//packaged in a bit aligned format
+//data structures that have 1 byte declared by default get padded
+//the very first byte in the stream is the data header and the rest is the message!
+#pragma pack (push, 1)
+struct MyGameGreeting
+{
+	//GENERAL FORMAT OF NETWORKING STRUCT:
+	//HEADER
+	//DATA
+	char messageID; //one byte
+	char greetingMessage[31]; //in this package we can have a 30 byte string (at the very end the null terminator)
+};
+#pragma pack (pop)
+
+
 int main(void)
 {
 	char str[512];
@@ -75,15 +92,20 @@ int main(void)
 				// Bitstreams are easier to use than sending casted structures, and handle endian swapping automatically
 
 				//Method 1: pack using bitstream
-				RakNet::BitStream bsOut;
-				bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
-				bsOut.Write("Hello world from client");
-				//the send command basically tells raknet how to configure the lower layers
-				//high priority and reliable ordered describe the transport layer- how the data should be transported
-				//system address flag describes the internet layer: ip address
-				//which protocol are we using on the transport layer? UDP....but we are emulating TCP thats why it says high_priority
-				//this is asynch echange and it's fine for now
-				peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+				//RakNet::BitStream bsOut;
+				//bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
+				//bsOut.Write("Hello world from client");
+				////the send command basically tells raknet how to configure the lower layers
+				////high priority and reliable ordered describe the transport layer- how the data should be transported
+				////system address flag describes the internet layer: ip address
+				////which protocol are we using on the transport layer? UDP....but we are emulating TCP thats why it says high_priority
+				////this is asynch echange and it's fine for now
+				//peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+
+
+				//Method 2: pack using structs
+				MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
+				peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 			}
 				break;
 			case ID_NEW_INCOMING_CONNECTION:
@@ -110,23 +132,28 @@ int main(void)
 				break;
 			case ID_GAME_MESSAGE_1: //server receives this, AND THE CLIENT THEY BOTH DO!!!
 			{
-				//Method 1: unpack using bitstream
-				RakNet::RakString rs;
-				RakNet::BitStream bsIn(packet->data, packet->length, false);
-				bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
-				bsIn.Read(rs);
-				printf("%s\n", rs.C_String());
+				////Method 1: unpack using bitstream
+				//RakNet::RakString rs;
+				//RakNet::BitStream bsIn(packet->data, packet->length, false);
+				//bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+				//bsIn.Read(rs);
+				//printf("%s\n", rs.C_String());
 
 
-				RakNet::BitStream bsOut;
-				bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
+				//RakNet::BitStream bsOut;
+				//bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
 
-				if(isServer)
-					bsOut.Write("Hello world from server");
-				else
-					bsOut.Write("Hello world from client");
+				//if(isServer)
+				//	bsOut.Write("Hello world from server");
+				//else
+				//	bsOut.Write("Hello world from client");
 
-				peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+				//peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+
+				//Method 2: receive using struct
+				//the data in the packet is already a char*
+				MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
+				printf("\n %s \n", greet->greetingMessage);
 			}
 			break;
 			default:
