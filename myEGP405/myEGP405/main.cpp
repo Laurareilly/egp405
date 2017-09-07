@@ -7,15 +7,28 @@
 
 enum GameMessages
 {
-	ID_GAME_MESSAGE_1 = ID_USER_PACKET_ENUM + 1 //End of the raknet reserve headers so now we can make our own
+	ID_GAME_MESSAGES = ID_USER_PACKET_ENUM,
+
+	//handshake exchange
+	ID_USERNAME,				//client responds to connection by sending it's username to server
+	ID_NEW_CLIENT_JOIN,			//server broadcasts welcome message to all clients
+	ID_CLIENT_NUMBER,			//server associates username with client number
+
+	//message exchange
+	ID_CHAT_MESSAGE,			//send by anyone
+
+	//misc.
+	ID_SEND_ALL,				//sent by client
 };
 
 
 //custom data structure
+//no padding
 //packaged in a bit aligned format
 //data structures that have 1 byte declared by default get padded
 //the very first byte in the stream is the data header and the rest is the message!
 #pragma pack (push, 1)
+/*
 struct MyGameGreeting
 {
 	//GENERAL FORMAT OF NETWORKING STRUCT:
@@ -24,6 +37,21 @@ struct MyGameGreeting
 	char messageID; //one byte
 	char greetingMessage[31]; //in this package we can have a 30 byte string (at the very end the null terminator)
 };
+*/
+
+struct UsernameMessage //for ID_USERNAME and ID_NEW_CLIENT_JOIN (don't use polymorphism or inheritance it will explode)
+{
+	char messageID;
+	char username[31];
+};
+
+struct ClientNumberMessage //for ID_CLIENT_NUMBER
+{
+	char messageID;
+	unsigned int clientNumber;
+};
+
+
 #pragma pack (pop)
 
 
@@ -84,10 +112,17 @@ int main(void)
 			case ID_REMOTE_NEW_INCOMING_CONNECTION:
 				printf("Another client has connected.\n");
 				break;
+
+				//client succesfully joins server
 			case ID_CONNECTION_REQUEST_ACCEPTED: //the client receives this
 			{
 				printf("Our connection request has been accepted.\n");
 
+				//set up username packet (using terrible hard-coded values, bad bad bad)
+				UsernameMessage username[1] = { ID_USERNAME, "Laura" };
+				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+
+				/*
 				// Use a BitStream to write a custom user message
 				// Bitstreams are easier to use than sending casted structures, and handle endian swapping automatically
 
@@ -104,8 +139,25 @@ int main(void)
 
 
 				//Method 2: pack using structs
-				MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
-				peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+				//MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
+				//peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //packet->systemaddress tells us who the message came from
+				*/
+			}
+				break;
+
+			case ID_USERNAME:
+			{
+				//we are server, store username in dictionary
+				//let everyone know who just joined
+
+				UsernameMessage *username = (UsernameMessage*)packet->data;
+				username->messageID = ID_NEW_CLIENT_JOIN;
+				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //true because 
+
+				//send new client their identifier
+				ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, 0};
+				//send
+				peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //wait so should this be true or false
 			}
 				break;
 			case ID_NEW_INCOMING_CONNECTION:
@@ -130,32 +182,34 @@ int main(void)
 					printf("Connection lost.\n");
 				}
 				break;
-			case ID_GAME_MESSAGE_1: //server receives this, AND THE CLIENT THEY BOTH DO!!!
-			{
-				////Method 1: unpack using bitstream
-				//RakNet::RakString rs;
-				//RakNet::BitStream bsIn(packet->data, packet->length, false);
-				//bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
-				//bsIn.Read(rs);
-				//printf("%s\n", rs.C_String());
+			//case ID_GAME_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
+			//{
+			//	/*
+			//	////Method 1: unpack using bitstream
+			//	//RakNet::RakString rs;
+			//	//RakNet::BitStream bsIn(packet->data, packet->length, false);
+			//	//bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+			//	//bsIn.Read(rs);
+			//	//printf("%s\n", rs.C_String());
 
 
-				//RakNet::BitStream bsOut;
-				//bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
+			//	//RakNet::BitStream bsOut;
+			//	//bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
 
-				//if(isServer)
-				//	bsOut.Write("Hello world from server");
-				//else
-				//	bsOut.Write("Hello world from client");
+			//	//if(isServer)
+			//	//	bsOut.Write("Hello world from server");
+			//	//else
+			//	//	bsOut.Write("Hello world from client");
 
-				//peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+			//	//peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 
-				//Method 2: receive using struct
-				//the data in the packet is already a char*
-				MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
-				printf("\n %s \n", greet->greetingMessage);
-			}
-			break;
+			//	//Method 2: receive using struct
+			//	//the data in the packet is already a char*
+			//	MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
+			//	printf("\n %s \n", greet->greetingMessage);
+			//	*/
+			//}
+			//break;
 			default:
 				printf("Message with identifier %i has arrived.\n", packet->data[0]);
 				break;
