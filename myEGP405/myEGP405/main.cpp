@@ -21,6 +21,12 @@ enum GameMessages
 	ID_SEND_ALL,				//sent by client
 };
 
+enum RoomState
+{
+	LOBBY = 0,
+	CHATROOM
+};
+
 
 //custom data structure
 //no padding
@@ -123,21 +129,6 @@ int main(void)
 				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 
 				/*
-				// Use a BitStream to write a custom user message
-				// Bitstreams are easier to use than sending casted structures, and handle endian swapping automatically
-
-				//Method 1: pack using bitstream
-				//RakNet::BitStream bsOut;
-				//bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
-				//bsOut.Write("Hello world from client");
-				////the send command basically tells raknet how to configure the lower layers
-				////high priority and reliable ordered describe the transport layer- how the data should be transported
-				////system address flag describes the internet layer: ip address
-				////which protocol are we using on the transport layer? UDP....but we are emulating TCP thats why it says high_priority
-				////this is asynch echange and it's fine for now
-				//peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
-
-
 				//Method 2: pack using structs
 				//MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
 				//peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //packet->systemaddress tells us who the message came from
@@ -185,24 +176,6 @@ int main(void)
 			//case ID_GAME_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
 			//{
 			//	/*
-			//	////Method 1: unpack using bitstream
-			//	//RakNet::RakString rs;
-			//	//RakNet::BitStream bsIn(packet->data, packet->length, false);
-			//	//bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
-			//	//bsIn.Read(rs);
-			//	//printf("%s\n", rs.C_String());
-
-
-			//	//RakNet::BitStream bsOut;
-			//	//bsOut.Write((RakNet::MessageID)ID_GAME_MESSAGE_1);
-
-			//	//if(isServer)
-			//	//	bsOut.Write("Hello world from server");
-			//	//else
-			//	//	bsOut.Write("Hello world from client");
-
-			//	//peer->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
-
 			//	//Method 2: receive using struct
 			//	//the data in the packet is already a char*
 			//	MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
