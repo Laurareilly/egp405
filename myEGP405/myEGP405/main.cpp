@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include <stdio.h>
 #include "Raknet/RakPeerInterface.h"
 #include "Raknet/MessageIdentifiers.h"
@@ -56,22 +57,27 @@ struct ClientNumberMessage //for ID_CLIENT_NUMBER
 	char messageID;
 	unsigned int clientNumber;
 };
+=======
+#include "GameMessage.h"
+#include <iostream>
+>>>>>>> 742ef3a52e840d04764df8e558a814e9b11be545
 
+using namespace std;
 
-#pragma pack (pop)
+char str[512];
+RakNet::RakPeerInterface *peer = RakNet::RakPeerInterface::GetInstance();
+bool isServer;
+RakNet::Packet *packet;
 
 
 int main(void)
 {
-	char str[512];
-	RakNet::RakPeerInterface *peer = RakNet::RakPeerInterface::GetInstance();
-	bool isServer;
-	RakNet::Packet *packet;
-
+	//initLobbyState();
 	unsigned int maxClients = 10;
 	unsigned int serverPort = 1111;
 
-	printf("(C) or (S)erver?\n");
+	cout << 
+	printf("(C)lient or (S)erver?\n");
 	fgets(str, 512, stdin);
 	if ((str[0] == 'c') || (str[0] == 'C'))
 	{
@@ -100,8 +106,12 @@ int main(void)
 		}
 		printf("Starting the client.\n");
 		peer->Connect(str, serverPort, 0, 0);
-
 	}
+
+	char* name;
+	printf("Whats your name?\n");
+	fgets(str, 512, stdin);
+	name = str;
 
 	while (1) //this loop SUCKS because we (the users) are confused on who is sending/receiving each message, processing cases unnecessarily
 	{
@@ -125,17 +135,19 @@ int main(void)
 				printf("Our connection request has been accepted.\n");
 
 				//set up username packet (using terrible hard-coded values, bad bad bad)
-				UsernameMessage username[1] = { ID_USERNAME, "Laura" };
+				UsernameMessage username[1] = { ID_USERNAME,  name};
 				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+<<<<<<< HEAD
 
 				/*
 				//Method 2: pack using structs
+=======
+				
+>>>>>>> 742ef3a52e840d04764df8e558a814e9b11be545
 				//MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
 				//peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //packet->systemaddress tells us who the message came from
-				*/
 			}
 				break;
-
 			case ID_USERNAME:
 			{
 				//we are server, store username in dictionary
@@ -173,14 +185,19 @@ int main(void)
 					printf("Connection lost.\n");
 				}
 				break;
-			//case ID_GAME_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
+			//case ID_CHAT_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
 			//{
+<<<<<<< HEAD
 			//	/*
 			//	//Method 2: receive using struct
 			//	//the data in the packet is already a char*
 			//	MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
 			//	printf("\n %s \n", greet->greetingMessage);
 			//	*/
+=======
+			//	ChatMessage *message = (ChatMessage*)(packet->data);
+			//	printf("\n %s \n", message->userMessage);
+>>>>>>> 742ef3a52e840d04764df8e558a814e9b11be545
 			//}
 			//break;
 			default:
@@ -194,6 +211,10 @@ int main(void)
 	// TODO - Add code body here
 
 	RakNet::RakPeerInterface::DestroyInstance(peer);
-
 	return 0;
+}
+
+void initLobbyState()
+{
+
 }
