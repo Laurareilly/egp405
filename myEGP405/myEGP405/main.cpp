@@ -1,10 +1,14 @@
-<<<<<<< HEAD
 #include <stdio.h>
 #include "Raknet/RakPeerInterface.h"
 #include "Raknet/MessageIdentifiers.h"
 #include <string.h>
 #include "Raknet/BitStream.h"
 #include "Raknet/RakNetTypes.h"  // MessageID
+#include "GameMessage.h"
+#include <iostream>
+#include <string>
+
+using namespace std;
 
 enum GameMessages
 {
@@ -28,28 +32,18 @@ enum RoomState
 	CHATROOM
 };
 
-
 //custom data structure
 //no padding
 //packaged in a bit aligned format
 //data structures that have 1 byte declared by default get padded
 //the very first byte in the stream is the data header and the rest is the message!
 #pragma pack (push, 1)
-/*
-struct MyGameGreeting
-{
-	//GENERAL FORMAT OF NETWORKING STRUCT:
-	//HEADER
-	//DATA
-	char messageID; //one byte
-	char greetingMessage[31]; //in this package we can have a 30 byte string (at the very end the null terminator)
-};
-*/
 
 struct UsernameMessage //for ID_USERNAME and ID_NEW_CLIENT_JOIN (don't use polymorphism or inheritance it will explode)
 {
 	char messageID;
 	char username[31];
+	char message[96];
 };
 
 struct ClientNumberMessage //for ID_CLIENT_NUMBER
@@ -57,28 +51,30 @@ struct ClientNumberMessage //for ID_CLIENT_NUMBER
 	char messageID;
 	unsigned int clientNumber;
 };
-=======
-#include "GameMessage.h"
-#include <iostream>
->>>>>>> 742ef3a52e840d04764df8e558a814e9b11be545
 
-using namespace std;
+#pragma pack(pop)
 
 char str[512];
 RakNet::RakPeerInterface *peer = RakNet::RakPeerInterface::GetInstance();
 bool isServer;
 RakNet::Packet *packet;
 
+unsigned int maxClients = 10;
+unsigned int serverPort = 1111;
+
+UsernameMessage connectedUserList[10];
+int connectedUserCount = 10;
+
 
 int main(void)
 {
-	//initLobbyState();
-	unsigned int maxClients = 10;
-	unsigned int serverPort = 1111;
+	char myUsernameString[31];
+	cout << "Welcome. Enter a username.\n";
+	fgets(myUsernameString, 31, stdin);
 
-	cout << 
-	printf("(C)lient or (S)erver?\n");
+	cout << "Would you like to be a (S)erver or a (C)lient?\n";
 	fgets(str, 512, stdin);
+
 	if ((str[0] == 'c') || (str[0] == 'C'))
 	{
 		RakNet::SocketDescriptor sd;
@@ -90,7 +86,6 @@ int main(void)
 		peer->Startup(maxClients, &sd, 1);
 		isServer = true;
 	}
-
 
 	if (isServer)
 	{
@@ -104,14 +99,9 @@ int main(void)
 		if (str[0] == 0 || str[0] == '\n') {
 			strcpy(str, "127.0.0.1");
 		}
-		printf("Starting the client.\n");
+		printf("Entering chatroom.\n");
 		peer->Connect(str, serverPort, 0, 0);
 	}
-
-	char* name;
-	printf("Whats your name?\n");
-	fgets(str, 512, stdin);
-	name = str;
 
 	while (1) //this loop SUCKS because we (the users) are confused on who is sending/receiving each message, processing cases unnecessarily
 	{
@@ -129,37 +119,73 @@ int main(void)
 				printf("Another client has connected.\n");
 				break;
 
+			case ID_USERNAME:
+			{
+				int i;
+				UsernameMessage *username = (UsernameMessage*)packet->data;
+				for (i = 0; i < connectedUserCount; ++i)
+				{
+					if (connectedUserList[i].messageID == 0)
+					{
+						//we are server, store username in dictionary
+						connectedUserList[i] = *username;
+						break;
+					}
+				}
+				printf(username->username);
+				//let everyone know who just joined
+				username->messageID = ID_NEW_CLIENT_JOIN;
+				//strcpy(username->username, username->username);
+				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //false sends it back to the person
+				//peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); //true because going to be sent to everyone
+
+				//send new client their identifier
+				ClientNumberMessage clientNumber[1] = { ID_CLIENT_NUMBER, i }; //sending the client number grabbed from the forloop
+				//send
+				peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //
+			}
+			break;
+
+			case ID_NEW_CLIENT_JOIN:
+			{
+				UsernameMessage *username = (UsernameMessage*)packet->data;
+				printf(username->username);
+				//printf("Username: %s has joined.\n", username->username);
+			}
+				break;
+
 				//client succesfully joins server
 			case ID_CONNECTION_REQUEST_ACCEPTED: //the client receives this
 			{
 				printf("Our connection request has been accepted.\n");
 
 				//set up username packet (using terrible hard-coded values, bad bad bad)
-				UsernameMessage username[1] = { ID_USERNAME,  name};
+				UsernameMessage username[1] = { ID_USERNAME,  "", "hello" };
+				//for (int index = 0; index < 31; index++)
+				//	username[0].username[index] = myUsernameString[index];
+				strcpy(username[0].username, myUsernameString);
 				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
-<<<<<<< HEAD
-
+			}
+				break;
 				/*
 				//Method 2: pack using structs
-=======
-				
->>>>>>> 742ef3a52e840d04764df8e558a814e9b11be545
+
 				//MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
 				//peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //packet->systemaddress tells us who the message came from
 			}
 				break;
 			case ID_USERNAME:
 			{
-				//we are server, store username in dictionary
-				//let everyone know who just joined
+				we are server, store username in dictionary
+				let everyone know who just joined
 
 				UsernameMessage *username = (UsernameMessage*)packet->data;
 				username->messageID = ID_NEW_CLIENT_JOIN;
 				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //true because 
 
-				//send new client their identifier
+				send new client their identifier
 				ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, 0};
-				//send
+				send
 				peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //wait so should this be true or false
 			}
 				break;
@@ -187,17 +213,16 @@ int main(void)
 				break;
 			//case ID_CHAT_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
 			//{
-<<<<<<< HEAD
 			//	/*
 			//	//Method 2: receive using struct
 			//	//the data in the packet is already a char*
 			//	MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
 			//	printf("\n %s \n", greet->greetingMessage);
 			//	*/
-=======
+
 			//	ChatMessage *message = (ChatMessage*)(packet->data);
 			//	printf("\n %s \n", message->userMessage);
->>>>>>> 742ef3a52e840d04764df8e558a814e9b11be545
+
 			//}
 			//break;
 			default:
@@ -212,9 +237,4 @@ int main(void)
 
 	RakNet::RakPeerInterface::DestroyInstance(peer);
 	return 0;
-}
-
-void initLobbyState()
-{
-
 }
