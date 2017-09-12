@@ -21,6 +21,7 @@ enum GameMessages
 
 	//message exchange
 	ID_CHAT_MESSAGE,			//send by anyone
+	ROB_TEST,
 
 	//misc.
 	ID_SEND_ALL,				//sent by client
@@ -133,10 +134,14 @@ int main(void)
 					}
 				}
 				printf(username->username);
+				UsernameMessage newMessage[1] = { ID_NEW_CLIENT_JOIN , "silas", "heck no" };
+				strcpy(newMessage[0].username, username->username);
+				strcpy(newMessage[0].message, username->message);
+
 				//let everyone know who just joined
 				username->messageID = ID_NEW_CLIENT_JOIN;
 				//strcpy(username->username, username->username);
-				peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //false sends it back to the person
+				peer->Send((char *)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //false sends it back to the person
 				//peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); //true because going to be sent to everyone
 
 				//send new client their identifier
@@ -149,8 +154,11 @@ int main(void)
 			case ID_NEW_CLIENT_JOIN:
 			{
 				UsernameMessage *username = (UsernameMessage*)packet->data;
-				printf(username->username);
-				//printf("Username: %s has joined.\n", username->username);
+				//printf(*username->username.c_str());
+				printf("Username: %s has joined.\n", username->username);
+
+				UsernameMessage newMessage[1] = { ID_CHAT_MESSAGE , "myname", "supergoodmessage" };
+				peer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 			}
 				break;
 
@@ -211,20 +219,24 @@ int main(void)
 					printf("Connection lost.\n");
 				}
 				break;
-			//case ID_CHAT_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
-			//{
-			//	/*
-			//	//Method 2: receive using struct
-			//	//the data in the packet is already a char*
-			//	MyGameGreeting *greet = (MyGameGreeting*)(packet->data);
-			//	printf("\n %s \n", greet->greetingMessage);
-			//	*/
+				*/
+			case ID_CHAT_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
+			{
+				UsernameMessage *message = (UsernameMessage*)(packet->data);
+				printf("\n %s \n", message->username);
 
-			//	ChatMessage *message = (ChatMessage*)(packet->data);
-			//	printf("\n %s \n", message->userMessage);
+				UsernameMessage newMessage[1] = { ROB_TEST, "ERROR_NAME", "Cool message from Rob" };
+				strcpy(newMessage[0].username, connectedUserList[0].username);
 
-			//}
-			//break;
+				peer->Send((char *)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+			}
+			break;
+			case ROB_TEST: //server receives this, AND THE CLIENT THEY BOTH DO!!!
+			{
+				UsernameMessage *message = (UsernameMessage*)(packet->data);
+				printf("\n%s: %s\n", message->username, message->message);
+			}
+			break;
 			default:
 				printf("Message with identifier %i has arrived.\n", packet->data[0]);
 				break;
