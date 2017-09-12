@@ -7,6 +7,7 @@
 #include "GameMessage.h"
 #include <iostream>
 #include <string>
+#include <Windows.h>
 
 using namespace std;
 
@@ -21,10 +22,14 @@ enum GameMessages
 
 	//message exchange
 	ID_CHAT_MESSAGE,			//send by anyone
-	ROB_TEST,
 
 	//misc.
 	ID_SEND_ALL,				//sent by client
+
+	ID_CLIENT_TO_SERVER,		//Clients exclusively send this, but will never receive and interpret it
+	ID_RECEIVE_MESSAGE,			//Server received ID_CtS, and determined that the message isn't a DM. This is then sent by server, and interpreted by clients
+	ID_RECEIVE_DIRECT_MESSAGE,	//Server received ID_CtS, and determined it was a DM. This is sent back to the sender, and is sent to the recipient of the DM (PURPLE)
+	ID_SERVER_MESSAGE			//Sent by Server, received by Clients, displayed in all red
 };
 
 enum RoomState
@@ -45,6 +50,7 @@ struct UsernameMessage //for ID_USERNAME and ID_NEW_CLIENT_JOIN (don't use polym
 	char messageID;
 	char username[31];
 	char message[96];
+	//RakNet::SystemAddress mContactInfo;
 };
 
 struct ClientNumberMessage //for ID_CLIENT_NUMBER
@@ -67,10 +73,47 @@ UsernameMessage connectedUserList[10];
 int connectedUserCount = 10;
 
 
+//preset colors for specific messages
+//char red[] = {}
+//char purple[]
+//char black[]
+//char white[]
+char blue[] = { 0x1b, '[', '1', ';', '3', '4', 'm', 0 };
+
+int gDefaultColors;
+
+//http://www.cplusplus.com/forum/beginner/1640/
+WORD GetConsoleTextAttribute(HANDLE hCon)
+{
+	CONSOLE_SCREEN_BUFFER_INFO con_info;
+	GetConsoleScreenBufferInfo(hCon, &con_info);
+	return con_info.wAttributes;
+}
+
+void SetTextRed()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
+}
+
+void SetTextPurple()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE);
+}
+
+void SetTextDefault()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), gDefaultColors);
+}
+
 int main(void)
 {
+	gDefaultColors = GetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE));
 	char myUsernameString[31];
+
+	SetTextPurple();
 	cout << "Welcome. Enter a username.\n";
+	SetTextDefault();
+
 	fgets(myUsernameString, 31, stdin);
 
 	cout << "Would you like to be a (S)erver or a (C)lient?\n";
@@ -95,6 +138,7 @@ int main(void)
 		peer->SetMaximumIncomingConnections(maxClients);
 	}
 	else {
+		system("Color 1A");
 		printf("Enter server IP or hit enter for 127.0.0.1\n");
 		fgets(str, 512, stdin);
 		if (str[0] == 0 || str[0] == '\n') {
@@ -141,6 +185,10 @@ int main(void)
 				//let everyone know who just joined
 				username->messageID = ID_NEW_CLIENT_JOIN;
 				//strcpy(username->username, username->username);
+
+				RakNet::SystemAddress desiredUserAddress;
+				desiredUserAddress = packet->systemAddress;
+
 				peer->Send((char *)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //false sends it back to the person
 				//peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); //true because going to be sent to everyone
 
@@ -224,19 +272,9 @@ int main(void)
 			{
 				UsernameMessage *message = (UsernameMessage*)(packet->data);
 				printf("\n %s \n", message->username);
-
-				UsernameMessage newMessage[1] = { ROB_TEST, "ERROR_NAME", "Cool message from Rob" };
-				strcpy(newMessage[0].username, connectedUserList[0].username);
-
-				peer->Send((char *)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 			}
 			break;
-			case ROB_TEST: //server receives this, AND THE CLIENT THEY BOTH DO!!!
-			{
-				UsernameMessage *message = (UsernameMessage*)(packet->data);
-				printf("\n%s: %s\n", message->username, message->message);
-			}
-			break;
+			
 			default:
 				printf("Message with identifier %i has arrived.\n", packet->data[0]);
 				break;
