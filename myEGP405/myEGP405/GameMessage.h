@@ -1,8 +1,10 @@
 #pragma once
+//#include "Raknet/MessageIdentifiers.h"
+//#include "Raknet/RakNetTypes.h"  // MessageID
 
 enum GameMessages
 {
-	ID_GAME_MESSAGES = ID_USER_PACKET_ENUM,
+	ID_GAME_MESSAGES = 0,//ID_USER_PACKET_ENUM,
 
 	//handshake exchange
 	ID_USERNAME,				//client responds to connection by sending it's username to server

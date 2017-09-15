@@ -1,61 +1,43 @@
 #include "Game.h"
-#include <time.h>
-#include <chrono>
+#include "Timer.h"
+#include "NetworkManager.h"
 
 
 Game::Game()
 {
-	mShouldExit = false;
+	mpTimer = new Timer();
 }
 
 Game::~Game()
 {
+	delete mpTimer;
+	mpTimer = nullptr;
 }
-
-void Game::beginLoop()
-{
-	mElapsedTime = 0.0f;
-	auto mStartTime = std::chrono::high_resolution_clock::now();
-}
-
-bool Game::endLoop()
-{
-	sleepUntilNextFrame();
-	return mShouldExit;
-}
-
-void Game::sleepUntilNextFrame()
-{
-	double currentTime, lastTime;
-
-	double timeToSleep = LOOP_TARGET_TIME - (mStartTime - currentTime);
-
-	while(timeToSleep > 0)
-	{
-		lastTime = currentTime;
-		double timeElapsed = LOOP_TARGET_TIME - (mStartTime - currentTime);
-		timeToSleep -= mElapsedTime;	
-	}
-
-}
-
 
 void Game::processLoop()
 {
 	ApplicationState theState[1]; //both a pointer and object at the same time, we have the address to it by default
 	theState->running = 1;
+	double deltaTime = LOOP_TARGET_TIME;
 
-	while (theState->running)
+	do
 	{
+		mpTimer->start();
 		updateInput(theState->key);
-
 		updateNetworking(theState);
-
 		updateState(theState);
-
 		render(theState);
+		deltaTime = LOOP_TARGET_TIME - mpTimer->getElapsedTime();
+		mpTimer->sleepUntilElapsed(deltaTime);
+		mpTimer->stop();
+		//std::cout << "Time for frame: " << deltaTime << std::endl;
 
-	}
+	} while (theState->running);
+}
+
+void Game::initGame()
+{
+	mpNetworkManager->initializeNetwork();
 }
 
 void Game::updateInput(KeyboardState * keyState)
@@ -69,23 +51,8 @@ void Game::updateInput(KeyboardState * keyState)
 
 void Game::updateNetworking(ApplicationState * state)
 {
-	//-- TMP: make some networking state 
-	//that stores a peer instance
-	//fow now a temp
-	RakNet::RakPeerInterface *peer;
-
-	//-- receive packets until no more packets
-	//-- while packet exists
-	//  --process message
-	//  --track data (if any) for later
-	RakNet::Packet *packet;
-	for (packet = peer->Receive(); packet; peer->DeallocatePacket(packet), peer->Receive())
-	{
-		//HOOREAY NETWORKING MESSAGES
-		//dont print anything unless debugging
-
-
-	}
+	mpNetworkManager->updateServer();
+	mpNetworkManager->updateClient();
 }
 
 void Game::updateState(ApplicationState * state)
