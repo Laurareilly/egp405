@@ -166,8 +166,10 @@
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ApplicationState.h" />
     <ClInclude Include="Chatroom.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameLocalState.h" />
     <ClInclude Include="GameMessage.h" />
     <ClInclude Include="Lobby.h" />
     <ClInclude Include="NetworkManager.h" />
