@@ -18,12 +18,12 @@ public:
 	};
 
 
-	struct ApplicationState
-	{
-		int running;
+	//struct ApplicationState
+	//{
+	//	int running;
 
-		KeyboardState key[1];
-	};
+	//	KeyboardState key[1];
+	//};
 
 
 private:
