@@ -3,31 +3,23 @@
 #define  _LOBBYSTATE_H
 
 #include "ApplicationState.h"
+#include <Windows.h>
 
 class Lobby : public ApplicationState
 {
 public:
+	Lobby();
 
-	virtual void updateInput()
-	{
-
-	}
+	virtual void updateInput();
 
 	virtual void updateNetworking()
 	{
-
+		//for lobby, this would just init server or attempt a connection i think
 	}
 
-	virtual void updateState()
-	{
-		//trigger transition
-		goToNextState(&data);
-	}
+	virtual void updateState();
 
-	virtual void display()
-	{
-
-	}
+	virtual void display();
 
 	virtual void onArriveFromPrevious(ApplicationState *passData)
 	{
@@ -36,8 +28,10 @@ public:
 
 	virtual void goToNextState(ApplicationState *passData)
 	{
-		next->onArriveFromPrevious(passData);
+		//next->onArriveFromPrevious(passData);
 	}
+
+	virtual void clearCurrentMessage();
 
 };
 

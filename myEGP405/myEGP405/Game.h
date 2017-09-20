@@ -30,9 +30,9 @@ private:
 
 	void initGame();
 	void updateInput(KeyboardState* keyState);
-	void updateNetworking(ApplicationState* state);
-	void updateState(ApplicationState* state);
-	void render(const ApplicationState* state);
+	//void updateNetworking(ApplicationState* state);
+	//void updateState(ApplicationState* state);
+	//void render(const ApplicationState* state);
 
 
 	const float LOOP_TARGET_TIME = 33.0f; //30 fps

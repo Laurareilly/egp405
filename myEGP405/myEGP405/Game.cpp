@@ -23,7 +23,7 @@ void Game::processLoop()
 	//theState->running = 1;
 	ApplicationState *theState;
 	Lobby theLobby[1];
-	GameLocalState theGame[1];
+	//GameLocalState theGame[1];
 	theState = theLobby;
 	double deltaTime = LOOP_TARGET_TIME;
 
