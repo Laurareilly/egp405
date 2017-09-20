@@ -32,7 +32,8 @@ public:
 	}
 
 	virtual void clearCurrentMessage();
-
+	virtual void processMessage();
+	virtual void PushMessageIntoQueue();
 };
 
 

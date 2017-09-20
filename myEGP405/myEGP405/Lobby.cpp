@@ -99,25 +99,61 @@ void Lobby::updateState()
 	//Not using mouse inputs for this app, but there are lots of things to check still
 
 	int index = 0;
-	bool shiftHeld = data.keyboardData[VK_SHIFT];
+	int shiftHeld = data.keyboardData[VK_SHIFT];
 
 	//I'm kinda confident I understand why this works, but I might explain it wrong
 	//I believe keyboardData has 256 switches, 1 for each possible input. but the value at 0x40 is undefined, and that's kinda dumb.
 	//If, between the values for A-Z (or whatever for loop we're in), keyboard is "true"/"pressed down", we will push its character to the string we're typing
 	//Then, we will update doesDisplay so we refresh the console and display the new data in the next function
 
-
-	//first, we will check for the letters A-Z (I'll add more once I prove this works)
-	//link above says A Key is 0x41, z Key is 0x5A, so we'll parse through those values
-	for (index = 0x41; index <= 0x5A; ++index)//using ++index cause dan likes it
-	{		
-		if (data.keyboardData[index] && !data.prevKeyboardData[index]) //make sure it isn't just held down!
+	//message size limit is 95 characters, so I'll enforce that on everything except Enter and Backspace (I need the shift boolean above for backspace's shortcut)
+	if (data.currentMessageIndex < 96)
+	{
+		//first, we will check for the letters A-Z (I'll add more once I prove this works)
+		//link above says A Key is 0x41, z Key is 0x5A, so we'll parse through those values
+		for (index = 0x41; index <= 0x5A; ++index)//using ++index cause dan likes it
 		{
-			//we will append this character to our string!
-			data.currentChatMessage += MapVirtualKey(index, MAPVK_VK_TO_CHAR);
+			if (data.keyboardData[index] && !data.prevKeyboardData[index]) //make sure it isn't just held down!
+			{
+				//we will append this character to our string!
+				data.currentChatMessage += MapVirtualKey(index, MAPVK_VK_TO_CHAR);
 
-			if (!shiftHeld)
-				data.currentChatMessage[data.currentMessageIndex] += 32;
+				if (!shiftHeld)
+					data.currentChatMessage[data.currentMessageIndex] += 32;
+
+				//increment currentMessageIndex
+				data.currentMessageIndex++;
+
+				//we need to tell our display() to clear this frame and redraw
+				data.doesDisplay = 1;
+			}
+		}
+
+		//For menus, we should have 0-9. I don't think this is the same as for the numpad values. so dont try and use those it'll break my perfect inputmanager
+		for (index = 0x30; index <= 0x39; ++index)//using ++index cause dan likes it
+		{
+			if (data.keyboardData[index] && !data.prevKeyboardData[index])//make sure it isn't just held down!
+			{
+				//we will append this character to our string!
+				data.currentChatMessage += MapVirtualKey(index, MAPVK_VK_TO_CHAR);
+
+				if (shiftHeld)
+					data.currentChatMessage[data.currentMessageIndex] = NumberToSymbol(data.currentChatMessage[data.currentMessageIndex]);
+
+				//increment currentMessageIndex
+				data.currentMessageIndex++;
+
+				//we need to tell our display() to clear this frame and redraw
+				data.doesDisplay = 1;
+			}
+		}
+
+		//Now, for some specifics. and I'm not giving users the \ key cause theyll hack my chat room or something.
+		//Users for right now need Enter (to push their message through) and backspace (to delete that shit they didn't like);
+
+		if (data.keyboardData[VK_SPACE] && !data.prevKeyboardData[VK_SPACE])//make sure it isn't just held down!
+		{
+			data.currentChatMessage += VK_SPACE;
 
 			//increment currentMessageIndex
 			data.currentMessageIndex++;
@@ -127,43 +163,11 @@ void Lobby::updateState()
 		}
 	}
 
-	//For menus, we should have 0-9. I don't think this is the same as for the numpad values. so dont try and use those it'll break my perfect inputmanager
-	for (index = 0x30; index <= 0x39; ++index)//using ++index cause dan likes it
-	{
-		if (data.keyboardData[index] && !data.prevKeyboardData[index])//make sure it isn't just held down!
-		{
-			//we will append this character to our string!
-			data.currentChatMessage += MapVirtualKey(index, MAPVK_VK_TO_CHAR);
-
-			if (shiftHeld)
-				data.currentChatMessage[data.currentMessageIndex] = NumberToSymbol(data.currentChatMessage[data.currentMessageIndex]);
-
-			//increment currentMessageIndex
-			data.currentMessageIndex++;
-
-			//we need to tell our display() to clear this frame and redraw
-			data.doesDisplay = 1;
-		}
-	}
-
-	//Now, for some specifics. and I'm not giving users the \ key cause theyll hack my chat room or something.
-	//Users for right now need Enter (to push their message through) and backspace (to delete that shit they didn't like);
-
-	if (data.keyboardData[VK_SPACE] && !data.prevKeyboardData[VK_SPACE])//make sure it isn't just held down!
-	{
-		data.currentChatMessage += VK_SPACE;
-
-		//increment currentMessageIndex
-		data.currentMessageIndex++;
-
-		//we need to tell our display() to clear this frame and redraw
-		data.doesDisplay = 1;
-	}
 
 	if (data.keyboardData[VK_RETURN] && !data.prevKeyboardData[VK_RETURN])//make sure it isn't just held down!
 	{
 		//this is a function, not a character to be inserted into the string
-
+		processMessage();
 	}
 
 	//tried using \b but that caused so many issues. cant imagine how bad it would've been to send that through a packet, probably wouldnt be received well
@@ -220,7 +224,31 @@ void Lobby::display()
 
 	cout << data.headerMessage << endl << endl << endl << endl << endl << endl;
 
+	for (int i = 9; i >= 0; i--)
+	{
+		cout << data.recentMessages[i] << endl;
+	}
+
 	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
 	cout << ">" << data.currentChatMessage << "<\b";
 	cout.flush();
 }
+
+//proof of concept, move the message up with "User: " at the beginning, then allow users to type a new one
+void Lobby::PushMessageIntoQueue()
+{
+	for (int i = 9; i > 0; i--)
+	{
+		data.recentMessages[i] = data.recentMessages[i - 1];
+	}
+
+	data.recentMessages[0] = "User: " + data.currentChatMessage + "\n";
+	clearCurrentMessage();
+}
+
+void Lobby::processMessage()
+{
+	PushMessageIntoQueue();
+	data.doesDisplay = 1;
+}
+

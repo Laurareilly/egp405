@@ -13,6 +13,8 @@ public:
 	virtual void updateState() = 0;
 	virtual void display() = 0;
 	virtual void clearCurrentMessage() = 0;
+	virtual void processMessage() = 0;
+	virtual void PushMessageIntoQueue() = 0;
 protected:
 	ApplicationState *next, *previous;
 
