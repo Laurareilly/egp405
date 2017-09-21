@@ -108,6 +108,12 @@ void Lobby::updateState()
 {
 	//Not using mouse inputs for this app, but there are lots of things to check still
 
+	if (data.enterServer)
+	{
+		data.enterServer = false;
+		goToNextState(this);
+	}
+
 	int index = 0;
 	int shiftHeld = data.keyboardData[VK_SHIFT];
 
@@ -538,9 +544,9 @@ void Lobby::updateNetworking()
 	if (!data.doesUpdateNetworking)
 		return;
 
-	
+	ApplicationState::mNetworkManager->updateServer();
 
-	for (ApplicationState::mNetworkManager->mpPacket = ApplicationState::mNetworkManager->mpPeer->Receive(); ApplicationState::mNetworkManager->mpPacket; ApplicationState::mNetworkManager->mpPeer->DeallocatePacket(ApplicationState::mNetworkManager->mpPacket), ApplicationState::mNetworkManager->mpPeer->Receive())
+	/*for (ApplicationState::mNetworkManager->mpPacket = ApplicationState::mNetworkManager->mpPeer->Receive(); ApplicationState::mNetworkManager->mpPacket; ApplicationState::mNetworkManager->mpPeer->DeallocatePacket(ApplicationState::mNetworkManager->mpPacket), ApplicationState::mNetworkManager->mpPeer->Receive())
 	{
 		switch (ApplicationState::mNetworkManager->mpPacket->data[0])
 		{
@@ -563,7 +569,7 @@ void Lobby::updateNetworking()
 		}
 
 		int ass = 8;
-	}
+	}*/
 
 	//successfullyConnectedToServer = 
 

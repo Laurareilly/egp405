@@ -8,10 +8,12 @@ class GameLocalState : public ApplicationState
 {
 public:
 	GameLocalState();
+	virtual std::string getUsername() { return data.myUsername; }
 	virtual void updateInput();
 	virtual void updateNetworking();
 	virtual void updateState();
 	virtual void display();
+	virtual void AcceptedToServer() { data.enterServer = 1; }
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{
 		data.currentChatMessage = "";
@@ -25,7 +27,7 @@ public:
 		data.ipAddress = passData->data.ipAddress;
 		data.headerMessage = "Welcome to UDPalooza!\nYou're live chatting now\nEnter #help for list of commands!";
 	};
-
+	bool isServer;
 	virtual void goToNextState(ApplicationState *passData);
 	virtual void clearCurrentMessage();
 	virtual void processMessage();

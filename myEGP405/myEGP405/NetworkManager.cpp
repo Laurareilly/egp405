@@ -2,6 +2,9 @@
 #include "GameMessage.h"
 #include "Raknet/MessageIdentifiers.h"
 #include <stdio.h>
+#include "Game.h"
+#include "commonFile.h"
+#include "ApplicationState.h"
 
 NetworkManager::NetworkManager()
 {
@@ -43,14 +46,20 @@ bool NetworkManager::initServer(int cPort)
 
 bool NetworkManager::initClient(int cPort, char* cIP)
 {	
+	mIsServer = false;
 	sd = new SocketDescriptor();
 	mpPeer->Startup(1, sd, 1);
+
+	if (!mpPeer)
+	{
+		printf("shit");
+	}
+
 	serverPort = cPort;
 
 	//need to ask for the server ip before this?
 	mpPeer->Connect(cIP, serverPort, 0, 0);
 
-	mIsServer = false;
 	return true;
 
 }
@@ -59,6 +68,10 @@ void NetworkManager::updateServer()
 {
 	for (mpPacket = mpPeer->Receive(); mpPacket; mpPeer->DeallocatePacket(mpPacket), mpPeer->Receive())
 	{
+		if ((int)(mpPacket->data[0] > 144)) //i dont know dan
+		{
+			break;
+		}
 		switch (mpPacket->data[0])
 		{
 		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
@@ -120,38 +133,35 @@ void NetworkManager::updateServer()
 			//		//client succesfully joins server
 				case ID_CONNECTION_REQUEST_ACCEPTED: //the client receives this
 				{
-					//printf("Our connection request has been accepted.\n");
+					printf("Our connection request has been accepted.\n");
+					gpGame->theState->AcceptedToServer();
+					//set up username packet (using terrible hard-coded values, bad bad bad)
+					UsernameMessage username[1] = { ID_USERNAME,  "", "hello" };
+					//for (int index = 0; index < 31; index++)
+					//	username[0].username[index] = myUsernameString[index];
+					strcpy(username[0].username, gpGame->theState->getUsername().c_str());
+					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 
-					////set up username packet (using terrible hard-coded values, bad bad bad)
-					//UsernameMessage username[1] = { ID_USERNAME,  "", "hello" };
-					////for (int index = 0; index < 31; index++)
-					////	username[0].username[index] = myUsernameString[index];
-					//strcpy(username[0].username, myUsernameString);
-					//peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+					gpGame->theState->isServer = false;
 				}
 					break;
-					/*
-					//Method 2: pack using structs
+				case ID_USERNAME:
+				{
+					/*we are server, store username in dictionary
+					let everyone know who just joined*/
 
-					//MyGameGreeting greet = { ID_GAME_MESSAGE_1, "hello struct whop whop"};
-					//peer->Send((char*)(&greet), sizeof(greet), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //packet->systemaddress tells us who the message came from
+					gpGame->theState->AcceptedToServer();
+
+					//UsernameMessage *username = (UsernameMessage*)packet->data;
+					//username->messageID = ID_NEW_CLIENT_JOIN;
+					//peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //true because 
+					//
+					//send new client their identifier
+					//ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, 0};
+					//send
+					//peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //wait so should this be true or false
 				}
 					break;
-			//	case ID_USERNAME:
-			//	{
-			//		we are server, store username in dictionary
-			//		let everyone know who just joined
-
-			//		UsernameMessage *username = (UsernameMessage*)packet->data;
-			//		username->messageID = ID_NEW_CLIENT_JOIN;
-			//		peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //true because 
-
-			//		send new client their identifier
-			//		ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, 0};
-			//		send
-			//		peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //wait so should this be true or false
-			//	}
-			//		break;
 			//	case ID_NEW_INCOMING_CONNECTION:
 			//		printf("A connection is incoming.\n");
 			//		break;

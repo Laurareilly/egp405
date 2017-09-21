@@ -102,10 +102,19 @@ void GameLocalState::clearCurrentMessage()
 //https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/ this link showed me the MapVirtualKey and MAPVK_VK_TO_CHAR, which let me cast  to char
 void GameLocalState::updateState()
 {
+	if (data.enterServer)
+	{
+		data.recentMessages[0] = "Someone joined";
+	}
 	//Not using mouse inputs for this app, but there are lots of things to check still
 	if (ApplicationState::mNetworkManager->mIsServer)
 	{
 		data.headerMessage = ApplicationState::mNetworkManager->mpPeer->GetLocalIP(0);
+		data.doesDisplay = 1;
+	}
+	else
+	{
+		data.headerMessage = "im a client lol";
 	}
 	int index = 0;
 	int shiftHeld = data.keyboardData[VK_SHIFT];

@@ -10,14 +10,15 @@ class Lobby : public ApplicationState
 public:
 	Lobby();
 
+	virtual std::string getUsername() { return data.myUsername; }
 	virtual void updateInput();
-
+	virtual void AcceptedToServer() { data.enterServer = 1; }
 	virtual void updateNetworking();
 
 	virtual void updateState();
 
 	virtual void display();
-
+	bool isServer;
 	virtual void onArriveFromPrevious(ApplicationState *passData)
 	{
 		data.currentChatMessage = "";

@@ -21,6 +21,12 @@ public:
 	virtual void PushMessageIntoQueue() = 0;
 	virtual void ClearScreen() = 0;
 	virtual char NumberToSymbol(char numChar) = 0;
+	virtual void AcceptedToServer() = 0;
+
+	virtual std::string getUsername() = 0;
+
+	bool isServer;
+
 
 	ApplicationState() { mNetworkManager = new NetworkManager(); }
 	~ApplicationState() { delete mNetworkManager; mNetworkManager = NULL; }
@@ -34,6 +40,7 @@ protected:
 		char doesUpdateNetworking;
 		char doesUpdateState;
 		char doesDisplay;
+		char enterServer = 0;
 		int currentMessageIndex = 0; //I really should know where I'm typing. I didn't have this for a while, but things got super messed up when trying to implement backspace, not sure if i need it anymore though
 		int keyboardData[256]; //will be set to get async key thing
 		int prevKeyboardData[256]; //this will be compared to keyboardData to force users to press each key as they want to type it (you can't hold down A and have it type AAAAAAAAA, you have to type each idnividual A)
@@ -52,6 +59,7 @@ protected:
 	virtual void onArriveFromPrevious(ApplicationState *passData) = 0;
 
 	NetworkManager *mNetworkManager;
+
 };
 
 
