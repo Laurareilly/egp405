@@ -19,7 +19,11 @@ public:
 	virtual void insertUsernameIntoList(char* cName, int cIndex);
 	virtual void SetSystemAddress(SystemAddress cAddress) { data.serverSystemAddress = cAddress; }
 	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
-	virtual void SetClientID(int cID) { data.clientID = cID; }
+	virtual void SetClientID(int cID) 
+	{
+		data.clientID = cID; 
+		printf("%f", data.clientID);
+	}
 	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0);
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{

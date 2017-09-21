@@ -24,9 +24,19 @@ GameLocalState::GameLocalState()
 
 void GameLocalState::updateInput()
 {
-	for (int i = 0; i < 256; ++i)
+	if ((GetConsoleWindow() == GetForegroundWindow()))
 	{
-		data.keyboardData[i] = GetAsyncKeyState(i);
+		for (int i = 0; i < 256; ++i)
+		{
+			data.keyboardData[i] = GetAsyncKeyState(i);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 256; ++i)
+		{
+			data.keyboardData[i] = 0;
+		}
 	}
 }
 
@@ -106,9 +116,10 @@ void GameLocalState::clearCurrentMessage()
 //https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/ this link showed me the MapVirtualKey and MAPVK_VK_TO_CHAR, which let me cast  to char
 void GameLocalState::updateState()
 {
-	if (data.enterServer)
+	if (!mNetworkManager->mIsServer)
 	{
-		data.recentMessages[0] = "Someone joined";
+		//data.headerMessage = data.clientID;
+
 	}
 	//Not using mouse inputs for this app, but there are lots of things to check still
 
@@ -245,6 +256,11 @@ void GameLocalState::display()
 
 	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
 	cout << ">" << data.currentChatMessage << "<\b";
+	if (!mNetworkManager->mIsServer)
+	{
+		printf("%u", data.clientID);
+	}
+
 	cout.flush();
 }
 

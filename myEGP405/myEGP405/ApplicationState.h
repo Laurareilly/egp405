@@ -50,7 +50,7 @@ protected:
 		SystemAddress allSystemAddresses[20];
 		SystemAddress serverSystemAddress;
 
-		int clientID = -1;
+		unsigned int clientID = 1;
 		char* usernameList[20]; //max clients is TWENTY
 		char doesUpdateInput;
 		char doesUpdateNetworking;

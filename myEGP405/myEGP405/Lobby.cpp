@@ -24,9 +24,19 @@ Lobby::Lobby()
 
 void Lobby::updateInput()
 {
-	for (int i = 0; i < 256; ++i)
+	if ((GetConsoleWindow() == GetForegroundWindow()))
 	{
-		data.keyboardData[i] = GetAsyncKeyState(i);
+		for (int i = 0; i < 256; ++i)
+		{
+			data.keyboardData[i] = GetAsyncKeyState(i);
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 256; ++i)
+		{
+			data.keyboardData[i] = 0;
+		}
 	}
 }
 

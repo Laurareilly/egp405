@@ -64,7 +64,7 @@ void NetworkManager::initClient(int cPort, char* cIP)
 
 void NetworkManager::updateServer()
 {
-	for (mpPacket = mpPeer->Receive(); mpPacket; mpPeer->DeallocatePacket(mpPacket), mpPeer->Receive())
+	for (mpPacket = mpPeer->Receive(); mpPacket; mpPeer->DeallocatePacket(mpPacket), mpPacket = mpPeer->Receive())
 	{
 		if ((int)(mpPacket->data[0] > 144)) //For some reason client -> connect's packet hits accept, then hits enum 221, then throws an exception
 		{
@@ -131,7 +131,10 @@ void NetworkManager::updateServer()
 				case ID_CLIENT_NUMBER:
 				{
 					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
-					gpGame->theState->SetClientID(clientNumber->clientNumber);
+					//gpGame->theState->SetClientID(clientNumber->clientNumber);
+					//verified that we are setting SetClientID to 1!
+					//if (clientNumber->clientNumber == 1)
+					//	gpGame->theState->SetClientID(1);
 				}
 				break;
 				case ID_CLIENT_TO_SERVER:
