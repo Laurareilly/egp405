@@ -2,6 +2,9 @@
 
 class Timer;
 class NetworkManager;
+class Lobby;
+class GameLocalState;
+class ApplicationState;
 
 class Game
 {
@@ -30,6 +33,9 @@ public:
 	//	KeyboardState key[1];
 	//};
 
+	Lobby *theLobby;
+	GameLocalState *theGame; 
+	ApplicationState *theState;
 
 private:
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RakNet\RakPeerInterface.h"
+#include <string>
 
 using namespace RakNet;
 
@@ -12,8 +13,8 @@ public:
 
 	void initializeNetwork();
 
-	void initServer();
-	void initClient();
+	bool initServer(int cPort);
+	bool initClient(int cPort, char* cIP);
 	void updateServer();
 	void updateClient();
 

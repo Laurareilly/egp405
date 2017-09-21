@@ -2,8 +2,8 @@
 #include "Timer.h"
 #include "NetworkManager.h"
 #include "Lobby.h"
-#include "ApplicationState.h"
 #include "GameLocalState.h"
+#include "ApplicationState.h"
 #include <stdio.h>
 
 //http://www.cplusplus.com/forum/beginner/1640/
@@ -19,6 +19,9 @@ Game::Game()
 	mpTimer = new Timer(); 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	mDefaultColors = GetConsoleTextAttribute(hConsole);
+	theLobby = new Lobby();
+	theGame = new GameLocalState();
+	theState = theLobby;
 }
 
 Game::~Game()
@@ -31,9 +34,8 @@ void Game::processLoop()
 {
 	//ApplicationState theState[1]; //both a pointer and object at the same time, we have the address to it by default
 	//theState->running = 1;
-	ApplicationState *theState;
-	Lobby theLobby[1];
-	//GameLocalState theGame[1];
+//	ApplicationState *theState;
+
 	theState = theLobby;
 	double deltaTime = LOOP_TARGET_TIME;
 

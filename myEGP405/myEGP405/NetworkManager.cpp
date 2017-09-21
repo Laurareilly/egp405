@@ -28,22 +28,38 @@ void NetworkManager::initializeNetwork()
 
 }
 
-void NetworkManager::initServer()
+bool NetworkManager::initServer(int cPort)
 {
+	bool serverSuccess = false;
+	maxClients = 20;
+	serverPort = cPort;
 	SocketDescriptor sd(serverPort, 0);
-	mpPeer->Startup(maxClients, &sd, 1);
+	serverSuccess =	mpPeer->Startup(maxClients, &sd, 1);
 	mpPeer->SetMaximumIncomingConnections(maxClients);
 	mIsServer = true;
+
+	return serverSuccess;
 }
 
-void NetworkManager::initClient()
+bool NetworkManager::initClient(int cPort, char* cIP)
 {
 	SocketDescriptor sd;
 	mpPeer->Startup(1, &sd, 1);
+	serverPort = cPort;
 
 	//need to ask for the server ip before this?
-	mpPeer->Connect("127.0.0.1", serverPort, 0, 0);
+	RakNet::ConnectionAttemptResult car = mpPeer->Connect(cIP, serverPort, 0, 0);
 	mIsServer = false;
+
+	bool connectionSuccessful = false;
+
+	if(car == RakNet::IS_CONNECTING)
+	{
+		connectionSuccessful = true;
+	}
+
+	return connectionSuccessful;
+
 }
 
 void NetworkManager::updateServer()

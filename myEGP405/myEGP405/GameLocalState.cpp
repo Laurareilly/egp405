@@ -1,14 +1,14 @@
+#include "GameLocalState.h"
+#include "ApplicationState.h"
 #include "Lobby.h"
 #include "commonFile.h"
 #include "Game.h"
 #include <iostream>
 #include <string>
-#include "GameLocalState.h"
-#include "ApplicationState.h"
 
 //Game *gpGame;
 
-Lobby::Lobby()
+GameLocalState::GameLocalState()
 {
 	data.headerMessage = "Welcome to UDPalooza!";
 	for (int i = 0; i < 10; ++i) //our recent messages are blank (user hasnt input anything)
@@ -16,10 +16,9 @@ Lobby::Lobby()
 		data.recentMessages[i] = '\n';
 	}
 	data.currentChatMessage = "";
-	lobbyOptionText = "Please enter your username (no spaces): ";
 }
 
-void Lobby::updateInput()
+void GameLocalState::updateInput()
 {
 	for (int i = 0; i < 256; ++i)
 	{
@@ -28,7 +27,7 @@ void Lobby::updateInput()
 }
 
 
-char Lobby::NumberToSymbol(char numChar)
+char GameLocalState::NumberToSymbol(char numChar)
 {
 	switch (numChar)
 	{
@@ -92,7 +91,7 @@ char Lobby::NumberToSymbol(char numChar)
 
 }
 
-void Lobby::clearCurrentMessage()
+void GameLocalState::clearCurrentMessage()
 {
 	data.currentChatMessage.erase(0, data.currentMessageIndex);
 	data.currentMessageIndex = 0;
@@ -101,7 +100,7 @@ void Lobby::clearCurrentMessage()
 //THANKS TO COLIN BRADY FOR THIS LINK BELOW AND FOR SUGGESTING USING GETASYNCKEYSTATE INSTEAD OF SDL
 //https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
 //https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/ this link showed me the MapVirtualKey and MAPVK_VK_TO_CHAR, which let me cast  to char
-void Lobby::updateState()
+void GameLocalState::updateState()
 {
 	//Not using mouse inputs for this app, but there are lots of things to check still
 
@@ -205,12 +204,12 @@ void Lobby::updateState()
 }
 
 //I thought this was gonna be more elaborate. I'd have to make it so if this was a game, not a chat room. Or if it was a more active chatroom even
-void Lobby::ClearScreen()
+void GameLocalState::ClearScreen()
 {
 	system("CLS");
 }
 
-void Lobby::display()
+void GameLocalState::display()
 {
 	using namespace std;
 	refreshDelay--;
@@ -230,10 +229,6 @@ void Lobby::display()
 	ClearScreen(); //clear tj """""""""buffer""""""""" yoshi https://www.youtube.com/watch?v=kpk2tdsPh0A creedit to pannen
 
 	cout << data.headerMessage << endl << endl << endl;
-	
-	gpGame->SetTextRed();
-	cout << lobbyOptionText << endl << endl;
-	gpGame->SetTextDefault();
 
 	for (int i = 9; i >= 0; i--)
 	{
@@ -246,7 +241,7 @@ void Lobby::display()
 }
 
 //proof of concept, move the message up with "User: " at the beginning, then allow users to type a new one
-void Lobby::PushMessageIntoQueue()
+void GameLocalState::PushMessageIntoQueue()
 {
 	for (int i = 9; i > 0; i--)
 	{
@@ -257,7 +252,7 @@ void Lobby::PushMessageIntoQueue()
 	clearCurrentMessage();
 }
 
-void Lobby::PushMessageIntoQueue(std::string newMessage)
+void GameLocalState::PushMessageIntoQueue(std::string newMessage)
 {
 	for (int i = 9; i > 0; i--)
 	{
@@ -268,209 +263,14 @@ void Lobby::PushMessageIntoQueue(std::string newMessage)
 	clearCurrentMessage();
 }
 
-void Lobby::processMessage()
+void GameLocalState::processMessage()
 {
-	//PushMessageIntoQueue(); //verified! Not used in lobby, but will be useful in game chat (pushing to server, not the console!)
-	if (data.myUsername == "")
-	{
-		bool canMoveForward = true;
-		if (data.currentMessageIndex > 0)
-		{
-			for (int i = 0; i < data.currentMessageIndex; i++)
-			{
-				if (data.currentChatMessage[i] == ' ' || data.currentChatMessage[i] == '@' || data.currentChatMessage[i] == '#')
-				{
-					canMoveForward = false;
-				}
-			}
-		}
-		else
-		{
-			canMoveForward = false;
-		}
-		if (canMoveForward)
-		{
-			data.myUsername = data.currentChatMessage;
-			PushMessageIntoQueue("Wonderful! Your name is now: " + data.currentChatMessage);
-			//clearCurrentMessage();
-			lobbyOptionText = "Type a number to choose one of the options below:\n(1) Start a Server\n(2) Join a Server\n(3) Quit Application"; //later I'd like a change username option if time permits
-		}
-		else
-		{
-			PushMessageIntoQueue("Sorry, that username is invalid. Please make sure there are no spaces, #, or @ signs!");
-		}
-	}
-	else
-	{
-		//interpret their message
-		//if it isn't applicable to an option from the list, discard it with a sorry message
-		//otherwise, update the list accordingly
-
-		if (data.currentMessageIndex > 0)
-		{
-			switch (mCurrentOption) //where are they in the menus?
-			{
-			case FIRST_SCREEN:
-			{
-				//just look at the first character. If they type 123 then it'll be option 1. Just for functionality for now, would like to improve if time permits
-				switch (data.currentChatMessage[0])
-				{
-				case 49: //option 1, move to MAKING_SERVER
-				{
-					lobbyOptionText = "Enter Server Port Number";
-					PushMessageIntoQueue("You have opted to Create a New Server!");
-					mCurrentOption = MAKING_SERVER;
-					wantsToBeServer = true;
-				}
-				break;
-				case 50: //option 2, move to JOINING_SERVER
-				{
-					lobbyOptionText = "Enter Server Port Number";
-					PushMessageIntoQueue("You have opted to Join an Existing Server!");
-					mCurrentOption = JOINING_SERVER;
-					wantsToBeServer = false;
-				}
-				break;
-				case 51: //option 3 say goodbye and exit
-				{
-					PushMessageIntoQueue("Sorry to see you go :(\n");
-					printf("\n");
-					gpGame->requestExit();
-				}
-				break;
-				default: //not an option
-				{
-					PushMessageIntoQueue("Invalid Option. Please type a number that corresponds to an item in the list.");
-				}
-				break;
-				}
-			}
-			break;
-			case MAKING_SERVER:
-			{
-				bool canMoveForward = true;
-				//make sure it's an int with less than 5 characters
-				if (data.currentMessageIndex > 5)
-				{
-					canMoveForward = false;
-				}
-				for (int i = 0; i < data.currentMessageIndex; i++)
-				{
-					if (data.currentChatMessage[i] < 48 || data.currentChatMessage[i] > 57) //not a number
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					data.portNumber = stoi(data.currentChatMessage);
-					if (data.portNumber > 65535)
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
-					if (ApplicationState::mNetworkManager->initServer(data.portNumber))
-					{
-						mCurrentOption = ESTABLISHING_CONNECTION;
-						lobbyOptionText = "Establishing Connection: Please Wait";
-						goToNextState(this);
-					}
-					else
-					{
-						PushMessageIntoQueue("Server could not be made at given Port Number. (May already exist?)");
-					}
-				}
-				else
-				{
-					PushMessageIntoQueue("Invalid Option. Please type a whole number smaller than 65535 (no spaces).");
-				}
-			}
-			break;
-			case JOINING_SERVER:
-			{
-				bool canMoveForward = true;
-				//make sure it's an int with less than 5 characters
-				if (data.currentMessageIndex > 5)
-				{
-					canMoveForward = false;
-				}
-				for (int i = 0; i < data.currentMessageIndex; i++)
-				{
-					if (data.currentChatMessage[i] < 48 || data.currentChatMessage[i] > 57) //not a number
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					data.portNumber = stoi(data.currentChatMessage);
-					if (data.portNumber > 65535)
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
-					mCurrentOption = JOINING_SERVER_IP;
-					lobbyOptionText = "Please enter the IP address, or just type \"default\"";
-
-				}
-				else
-				{
-					PushMessageIntoQueue("Invalid Option. Please type a whole number smaller than 65535 (no spaces).");
-				}
-			}
-			break;
-			case JOINING_SERVER_IP:
-			{
-				bool canMoveForward = true;
-				
-				if (data.currentChatMessage == "Default" || data.currentChatMessage == "default")
-				{
-					data.ipAddress = "127.0.0.1";
-				}
-				else
-				{					
-					canMoveForward = false;
-				}
-
-				if (canMoveForward)
-				{
-					if (ApplicationState::mNetworkManager->initClient(data.portNumber, data.ipAddress))
-					{
-						goToNextState(this);
-					}
-					else
-						PushMessageIntoQueue("Cannot access server with the given IP / Port Number");
-				}
-				else
-				{
-					PushMessageIntoQueue("Invalid IP address. You can type \"default\" if a local server is active");
-				}
-			}
-			break;
-			default:
-			{
-
-			}
-			break;
-			}
-		}
-
-	}
-
-
-	data.doesDisplay = 1;
 }
 
-void Lobby::goToNextState(ApplicationState *passData)
+
+void GameLocalState::goToNextState(ApplicationState *passData)
 {
-	//dan this is good use of polymorphism i think -robby
-	gpGame->theState = gpGame->theGame;
+	gpGame->theState = gpGame->theLobby;
 	next = gpGame->theState;
 	next->onArriveFromPrevious(passData);
 }

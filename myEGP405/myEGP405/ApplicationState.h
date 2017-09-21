@@ -5,9 +5,13 @@
 
 #include <string>
 
+#include "NetworkManager.h"
+
 class ApplicationState abstract //this type of state can never be used
 {
 public:
+	friend class Lobby;
+	friend class GameLocalState;
 	virtual void updateInput() = 0;
 	virtual void updateNetworking() = 0;
 	virtual void updateState() = 0;
@@ -15,6 +19,12 @@ public:
 	virtual void clearCurrentMessage() = 0;
 	virtual void processMessage() = 0;
 	virtual void PushMessageIntoQueue() = 0;
+	virtual void ClearScreen() = 0;
+	virtual char NumberToSymbol(char numChar) = 0;
+
+	ApplicationState() { mNetworkManager = new NetworkManager(); }
+	~ApplicationState() { delete mNetworkManager; mNetworkManager = NULL; }
+
 protected:
 	ApplicationState *next, *previous;
 
@@ -32,7 +42,7 @@ protected:
 		std::string recentMessages[10];
 		std::string myUsername = "";
 		int portNumber = 7777;
-		std::string ipAddress = "127.0.0.1";
+		char* ipAddress = "127.0.0.1";
 		//previous char buffer
 	} data;
 
@@ -40,6 +50,8 @@ protected:
 
 	virtual void goToNextState(ApplicationState *passData) = 0;
 	virtual void onArriveFromPrevious(ApplicationState *passData) = 0;
+
+	NetworkManager *mNetworkManager;
 };
 
 
