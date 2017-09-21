@@ -132,7 +132,8 @@ void NetworkManager::updateServer()
 					break;
 				case ID_CLIENT_NUMBER:
 				{
-					
+					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
+					gpGame->theState->SetClientID(clientNumber->clientNumber);
 				}
 				break;
 				case ID_CLIENT_TO_SERVER:
@@ -182,8 +183,8 @@ void NetworkManager::updateServer()
 					else
 					{
 						UsernameMessage username[1] = { ID_RECEIVE_MESSAGE, "", "hello" };
-						strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
 						strcpy(username->message, newMessage->message);
+						strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true);
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 					}
@@ -191,7 +192,8 @@ void NetworkManager::updateServer()
 				break;
 				case ID_RECEIVE_MESSAGE:
 				{
-
+					UsernameMessage *username = (UsernameMessage*)mpPacket->data;
+					gpGame->theState->ReceiveMessage(username->username, username->message);
 				}
 				break;
 			//	case ID_NEW_INCOMING_CONNECTION:
@@ -226,7 +228,7 @@ void NetworkManager::updateServer()
 			//	
 			default:
 			{
-				printf("aifjai");
+				printf("Default Constructor Hit");
 			}
 				break;
 				//printf("Message with identifier %i has arrived.\n", packet->data[0]);
