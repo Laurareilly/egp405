@@ -289,9 +289,9 @@ int GameLocalState::getNextOpenUsernameIndex()
 
 void GameLocalState::insertUsernameIntoList(char cName[31], int cIndex)
 {	
-	strcpy(newUsername, cName);
-	data.usernameList[cIndex] = newUsername;
-	//strcpy(data.usernameList[cIndex], cName);
+	strcpy(newUsername[cIndex], cName);
+	data.usernameList[cIndex] = newUsername[cIndex];
+	strcpy(data.usernameList[cIndex], cName);
 	data.doesDisplay = 1;
 }
 

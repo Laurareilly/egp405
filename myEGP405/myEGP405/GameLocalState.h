@@ -57,7 +57,10 @@ public:
 	virtual void ClearScreen();
 	virtual char NumberToSymbol(char numChar);
 
-	char newUsername[31];
+	char newUsername[20][31]; //my version of allocating space for 20 usernames
+	//i might be able to use this INSTEAD of username list but I'm scared to change much
+	//this was just a char [31], but I realized having additional clients would overwrite the data stored here
+	//as always, I learned a lot about C from this project even though I'm POSITIVE this is improper 
 
 private:
 
