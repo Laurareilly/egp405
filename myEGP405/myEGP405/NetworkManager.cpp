@@ -100,7 +100,7 @@ void NetworkManager::updateServer()
 					//for (int index = 0; index < 31; index++)
 					//	username[0].username[index] = myUsernameString[index];
 					gpGame->theState->SetSystemAddress(mpPacket->systemAddress);
-					strcpy(username[0].username, gpGame->theState->getUsername().c_str());
+					strcpy(username[0].username, gpGame->theState->getUsername());
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 
 					//gpGame->theState->isServer = false;
@@ -117,11 +117,14 @@ void NetworkManager::updateServer()
 					UsernameMessage *username = (UsernameMessage*)mpPacket->data;
 					username->messageID = ID_NEW_CLIENT_JOIN;
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
+
+
 					int clientIDNum = gpGame->theState->getNextOpenUsernameIndex();
+					char newUsername[31];
+					strncpy(newUsername, username->username, 31);
 
 					gpGame->theState->insertUsernameIntoList(username->username, clientIDNum);
 
-					
 					//send new client their identifier
 					ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, clientIDNum};
 					//send

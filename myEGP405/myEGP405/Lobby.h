@@ -10,7 +10,7 @@ class Lobby : public ApplicationState
 public:
 	Lobby();
 
-	virtual std::string getUsername() { return data.myUsername; }
+	virtual char* getUsername() { return data.myUsername; }
 	virtual void updateInput();
 	virtual void AcceptedToServer() { data.enterServer = 1; }
 	virtual void updateNetworking();
@@ -27,6 +27,8 @@ public:
 	virtual void insertUsernameIntoList(char* cName, int cIndex) {};
 	virtual int getNextOpenUsernameIndex() { return -1; };
 	bool isServer;
+
+
 	virtual void onArriveFromPrevious(ApplicationState *passData)
 	{
 		data.currentChatMessage = "";
@@ -35,7 +37,7 @@ public:
 		data.doesUpdateInput = 1;
 		data.doesUpdateNetworking = 0;
 		data.doesUpdateState = 1;
-		data.myUsername = passData->data.myUsername;
+		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
 		data.headerMessage = "Welcome to UDPalooza!";

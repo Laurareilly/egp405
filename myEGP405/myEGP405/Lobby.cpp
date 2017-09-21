@@ -20,6 +20,7 @@ Lobby::Lobby()
 	data.currentChatMessage = "";
 	lobbyOptionText = "Please enter your username (no spaces): ";
 	data.doesUpdateNetworking = 0;
+	data.myUsername[0] = ' ';
 }
 
 void Lobby::updateInput()
@@ -314,10 +315,10 @@ void Lobby::PushMessageIntoQueue(std::string newMessage)
 void Lobby::processMessage()
 {
 	//PushMessageIntoQueue(); //verified! Not used in lobby, but will be useful in game chat (pushing to server, not the console!)
-	if (data.myUsername == "")
+	if (data.myUsername[0] == ' ')
 	{
 		bool canMoveForward = true;
-		if (data.currentMessageIndex > 0)
+		if (data.currentMessageIndex > 0 && data.currentMessageIndex < 31) //username has length limits
 		{
 			for (int i = 0; i < data.currentMessageIndex; i++)
 			{
@@ -333,7 +334,7 @@ void Lobby::processMessage()
 		}
 		if (canMoveForward)
 		{
-			data.myUsername = data.currentChatMessage;
+			strcpy(data.myUsername, data.currentChatMessage.c_str());
 			PushMessageIntoQueue("Wonderful! Your name is now: " + data.currentChatMessage);
 			//clearCurrentMessage();
 			lobbyOptionText = "Type a number to choose one of the options below:\n(1) Start a Server\n(2) Join a Server\n(3) Quit Application"; //later I'd like a change username option if time permits

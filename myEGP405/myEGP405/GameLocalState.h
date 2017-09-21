@@ -8,7 +8,7 @@ class GameLocalState : public ApplicationState
 {
 public:
 	GameLocalState();
-	virtual std::string getUsername() { return data.myUsername; }
+	virtual char* getUsername() { return data.myUsername; }
 	virtual void updateInput();
 	virtual void updateNetworking();
 	virtual void updateState();
@@ -16,7 +16,7 @@ public:
 	virtual void AcceptedToServer() { data.enterServer = 1; }
 	virtual char** getUsernameList() { return data.usernameList; }
 	virtual int getNextOpenUsernameIndex();
-	virtual void insertUsernameIntoList(char* cName, int cIndex);
+	virtual void insertUsernameIntoList(char cName[31], int cIndex);
 	virtual void SetSystemAddress(SystemAddress cAddress) { data.serverSystemAddress = cAddress; }
 	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
 	virtual void SetClientID(int cID) 
@@ -33,7 +33,7 @@ public:
 		data.doesUpdateInput = 1;
 		data.doesUpdateNetworking = 1;
 		data.doesUpdateState = 1;
-		data.myUsername = passData->data.myUsername;
+		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
 		data.headerMessage = "Welcome to UDPalooza!\nYou're live chatting now\nEnter #help for list of commands!";
@@ -43,9 +43,7 @@ public:
 		if (mNetworkManager->mIsServer)
 		{
 			data.clientID = 0;
-			char* tempUsername = new char[data.myUsername.length() + 1];
-			strcpy(tempUsername, data.myUsername.c_str());
-			insertUsernameIntoList(tempUsername, 0);
+			insertUsernameIntoList(data.myUsername, 0);
 			data.headerMessage = getUsernameList()[0];
 		}
 	};

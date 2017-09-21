@@ -220,6 +220,12 @@ void GameLocalState::updateState()
 		//so long space cowboy
 		data.prevKeyboardData[i] = data.keyboardData[i];
 	}
+
+	if (!data.doesUpdateNetworking)
+	{
+		printf("bad");
+	}
+
 }
 
 //I thought this was gonna be more elaborate. I'd have to make it so if this was a game, not a chat room. Or if it was a more active chatroom even
@@ -256,10 +262,18 @@ void GameLocalState::display()
 
 	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
 	cout << ">" << data.currentChatMessage << "<\b";
-	if (!mNetworkManager->mIsServer)
+
+	//verified with hard coding that server = 0 and client = 1
+	int indexThjing = 0;
+	if (mNetworkManager->mIsServer)
 	{
-		printf("%u", data.clientID);
+		while (data.usernameList[indexThjing] != "")
+		{
+			printf("\n%s", data.usernameList[indexThjing]);
+			indexThjing++;
+		}
 	}
+	
 
 	cout.flush();
 }
@@ -274,9 +288,10 @@ int GameLocalState::getNextOpenUsernameIndex()
 	return -1;
 }
 
-void GameLocalState::insertUsernameIntoList(char * cName, int cIndex)
+void GameLocalState::insertUsernameIntoList(char cName[31], int cIndex)
 {
 	data.usernameList[cIndex] = cName;
+	data.doesDisplay = 1;
 }
 
 //proof of concept, move the message up with "User: " at the beginning, then allow users to type a new one
@@ -331,6 +346,7 @@ void GameLocalState::ReceiveMessage(char* cUser, char* cMessage, int cMsgType)
 	std::string userString = cUser;
 	std::string messageString = cUser;
 	std::string fullString = userString + ": " + messageString;
-
+	data.doesDisplay = 1;
 	PushMessageIntoQueue(fullString);
 }
+

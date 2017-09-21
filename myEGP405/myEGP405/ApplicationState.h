@@ -10,6 +10,16 @@
 class ApplicationState abstract //this type of state can never be used
 {
 public:
+#pragma pack (push, 1)
+	struct UsernameMessage
+	{
+		char messageID;
+		char username[31];
+		char message[96];
+		RakNet::SystemAddress mContactInfo;
+	};
+#pragma pack(pop)
+
 	friend class Lobby;
 	friend class GameLocalState;
 	virtual void updateInput() = 0;
@@ -34,7 +44,7 @@ public:
 	virtual void insertUsernameIntoList(char* cName, int cIndex) = 0;
 
 	virtual char** getUsernameList() = 0;
-	virtual std::string getUsername() = 0;
+	virtual char* getUsername() = 0;
 
 	bool isServer;
 
@@ -51,6 +61,7 @@ protected:
 		SystemAddress serverSystemAddress;
 
 		unsigned int clientID = 1;
+		UsernameMessage userList[20];
 		char* usernameList[20]; //max clients is TWENTY
 		char doesUpdateInput;
 		char doesUpdateNetworking;
@@ -63,7 +74,7 @@ protected:
 		std::string currentChatMessage;
 		std::string headerMessage;
 		std::string recentMessages[10];
-		std::string myUsername = "";
+		char myUsername[31];
 		int portNumber = 5546;
 		char* ipAddress = "127.0.0.1";
 		//previous char buffer
