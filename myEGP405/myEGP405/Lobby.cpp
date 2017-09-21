@@ -1,15 +1,20 @@
 #include "Lobby.h"
+#include "commonFile.h"
+#include "Game.h"
 #include <iostream>
 #include <string>
 
+//Game *gpGame;
+
 Lobby::Lobby()
 {
-	data.headerMessage = "Welcome to the Lobby!";
+	data.headerMessage = "Welcome to UDPalooza!";
 	for (int i = 0; i < 10; ++i) //our recent messages are blank (user hasnt input anything)
 	{
 		data.recentMessages[i] = '\n';
 	}
 	data.currentChatMessage = "";
+	lobbyOptionText = "Please enter your username (no spaces): ";
 }
 
 void Lobby::updateInput()
@@ -222,7 +227,11 @@ void Lobby::display()
 
 	ClearScreen(); //clear tj """""""""buffer""""""""" yoshi
 
-	cout << data.headerMessage << endl << endl << endl << endl << endl << endl;
+	cout << data.headerMessage << endl << endl << endl;
+	
+	gpGame->SetTextRed();
+	cout << lobbyOptionText << endl << endl;
+	gpGame->SetTextDefault();
 
 	for (int i = 9; i >= 0; i--)
 	{
@@ -246,9 +255,146 @@ void Lobby::PushMessageIntoQueue()
 	clearCurrentMessage();
 }
 
+void Lobby::PushMessageIntoQueue(std::string newMessage)
+{
+	for (int i = 9; i > 0; i--)
+	{
+		data.recentMessages[i] = data.recentMessages[i - 1];
+	}
+
+	data.recentMessages[0] = newMessage + '\n';
+	clearCurrentMessage();
+}
+
 void Lobby::processMessage()
 {
-	PushMessageIntoQueue();
+	//PushMessageIntoQueue(); //verified! Not used in lobby, but will be useful in game chat (pushing to server, not the console!)
+	if (data.myUsername == "")
+	{
+		bool canMoveForward = true;
+		if (data.currentMessageIndex > 0)
+		{
+			for (int i = 0; i < data.currentMessageIndex; i++)
+			{
+				if (data.currentChatMessage[i] == ' ')
+				{
+					canMoveForward = false;
+				}
+			}
+		}
+		if (canMoveForward)
+		{
+			data.myUsername = data.currentChatMessage;
+			PushMessageIntoQueue("Wonderful! Your name is now: " + data.currentChatMessage);
+			//clearCurrentMessage();
+			lobbyOptionText = "Type a number to choose one of the options below:\n(1) Start a Server\n(2) Join a Server\n(3) Quit Application"; //later I'd like a change username option if time permits
+		}
+		else
+		{
+			PushMessageIntoQueue("Sorry, that username is invalid. Please make sure there are no spaces!");
+		}
+	}
+	else
+	{
+		//interpret their message
+		//if it isn't applicable to an option from the list, discard it with a sorry message
+		//otherwise, update the list accordingly
+
+		if (data.currentMessageIndex > 0)
+		{
+			switch (mCurrentOption) //where are they in the menus?
+			{
+			case FIRST_SCREEN:
+			{
+				//just look at the first character. If they type 123 then it'll be option 1. Just for functionality for now, would like to improve if time permits
+				switch (data.currentChatMessage[0])
+				{
+				case 49: //option 1, move to MAKING_SERVER
+				{
+					lobbyOptionText = "Enter Server Port Number";
+					PushMessageIntoQueue("You have opted to Create a New Server!");
+					mCurrentOption = MAKING_SERVER;
+					wantsToBeServer = true;
+				}
+				break;
+				case 50: //option 2, move to JOINING_SERVER
+				{
+					lobbyOptionText = "Enter Server Port Number";
+					PushMessageIntoQueue("You have opted to Join an Existing Server!");
+					mCurrentOption = JOINING_SERVER;
+					wantsToBeServer = false;
+				}
+				break;
+				case 51: //option 3 say goodbye and exit
+				{
+					PushMessageIntoQueue("Sorry to see you go :(\n");
+					gpGame->requestExit();
+				}
+				break;
+				default: //not an option
+				{
+					PushMessageIntoQueue("Invalid Option. Please type a number that corresponds to an item in the list.");
+				}
+				break;
+				}
+			}
+			break;
+			case MAKING_SERVER:
+			{
+				bool canMoveForward = true;
+				//make sure it's an int with less than 5 characters
+				if (data.currentMessageIndex > 5)
+				{
+					canMoveForward = false;
+				}
+				for (int i = 0; i < data.currentMessageIndex; i++)
+				{
+					if (data.currentChatMessage[i] < 48 || data.currentChatMessage[i] > 57) //not a number
+					{
+						canMoveForward = false;
+					}
+				}
+				if (canMoveForward)
+				{
+					data.portNumber = stoi(data.currentChatMessage);
+					if (data.portNumber > 65535)
+					{
+						canMoveForward = false;
+					}
+				}
+				if (canMoveForward)
+				{
+					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
+					mCurrentOption = ESTABLISHING_CONNECTION;
+					lobbyOptionText = "Establishing Connection: Please Wait";
+				}
+				else
+				{
+					PushMessageIntoQueue("Invalid Option. Please type a whole number smaller than 65535 (no spaces).");
+				}
+			}
+			break;
+			case JOINING_SERVER:
+			{
+
+			}
+			break;
+			case JOINING_SERVER_IP:
+			{
+
+			}
+			break;
+			default:
+			{
+
+			}
+			break;
+			}
+		}
+
+	}
+
+
 	data.doesDisplay = 1;
 }
 

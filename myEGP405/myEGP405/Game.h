@@ -17,6 +17,11 @@ public:
 		unsigned char key[256];
 	};
 
+	void requestExit() { mRunning = false; }
+
+	void SetTextRed();
+	void SetTextPurple();
+	void SetTextDefault();
 
 	//struct ApplicationState
 	//{
@@ -37,9 +42,10 @@ private:
 
 	const float LOOP_TARGET_TIME = 33.0f; //30 fps
 	const float TARGET_ELAPSED_TIME = LOOP_TARGET_TIME / 1000.0f;
-	bool mRunning;
+	bool mRunning = true;
 
 	Timer *mpTimer;
 	NetworkManager *mpNetworkManager;
+	int mDefaultColors;
 };
 

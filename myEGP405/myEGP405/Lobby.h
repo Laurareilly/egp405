@@ -34,6 +34,20 @@ public:
 	virtual void clearCurrentMessage();
 	virtual void processMessage();
 	virtual void PushMessageIntoQueue();
+	virtual void PushMessageIntoQueue(std::string newMessage);
+
+private:
+	std::string lobbyOptionText;
+	enum CurrentChoice
+	{
+		FIRST_SCREEN,
+		MAKING_SERVER,
+		JOINING_SERVER,
+		JOINING_SERVER_IP,
+		ESTABLISHING_CONNECTION,
+	}mCurrentOption = FIRST_SCREEN;
+
+	bool wantsToBeServer = false;
 };
 
 

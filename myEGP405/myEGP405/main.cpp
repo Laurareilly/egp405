@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include "Game.h"
+#include "commonFile.h"
 
 
 using namespace std;
@@ -25,37 +26,14 @@ int connectedUserCount = 10;
 //char white[]
 char blue[] = { 0x1b, '[', '1', ';', '3', '4', 'm', 0 };
 
-int gDefaultColors;
 
-//http://www.cplusplus.com/forum/beginner/1640/
-WORD GetConsoleTextAttribute(HANDLE hCon)
-{
-	CONSOLE_SCREEN_BUFFER_INFO con_info;
-	GetConsoleScreenBufferInfo(hCon, &con_info);
-	return con_info.wAttributes;
-}
-
-void SetTextRed()
-{
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
-}
-
-void SetTextPurple()
-{
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE);
-}
-
-void SetTextDefault()
-{
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), gDefaultColors);
-}
 
 int main(void)
 {
 	gpGame = new Game();
 	gpGame->processLoop();
 
-
+	system("Pause");
 	//gDefaultColors = GetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE));
 	//char myUsernameString[31];
 

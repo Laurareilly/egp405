@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClInclude Include="ApplicationState.h" />
     <ClInclude Include="Chatroom.h" />
+    <ClInclude Include="commonFile.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameLocalState.h" />
     <ClInclude Include="GameMessage.h" />

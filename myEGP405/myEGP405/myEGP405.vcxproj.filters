@@ -59,5 +59,8 @@
     <ClInclude Include="GameLocalState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="commonFile.h">
+      <Filter>Source Files\States</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

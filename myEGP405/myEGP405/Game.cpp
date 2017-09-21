@@ -4,11 +4,21 @@
 #include "Lobby.h"
 #include "ApplicationState.h"
 #include "GameLocalState.h"
+#include <stdio.h>
 
+//http://www.cplusplus.com/forum/beginner/1640/
+WORD GetConsoleTextAttribute(HANDLE hCon)
+{
+	CONSOLE_SCREEN_BUFFER_INFO con_info;
+	GetConsoleScreenBufferInfo(hCon, &con_info);
+	return con_info.wAttributes;
+}
 
 Game::Game()
 {
-	mpTimer = new Timer();
+	mpTimer = new Timer(); 
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	mDefaultColors = GetConsoleTextAttribute(hConsole);
 }
 
 Game::~Game()
@@ -28,7 +38,7 @@ void Game::processLoop()
 	double deltaTime = LOOP_TARGET_TIME;
 
 	//do
-	while(1)
+	while(mRunning)
 	{
 		mpTimer->start();
 		//updateInput(theState->key);
@@ -61,6 +71,21 @@ void Game::updateInput(KeyboardState * keyState)
 
 	//--example: in a chat room...
 	GetKeyboardState(keyState->key);
+}
+
+void Game::SetTextRed()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED);
+}
+
+void Game::SetTextPurple()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE);
+}
+
+void Game::SetTextDefault()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mDefaultColors);
 }
 
 //void Game::updateNetworking(ApplicationState * state)

@@ -30,6 +30,9 @@ protected:
 		std::string currentChatMessage;
 		std::string headerMessage;
 		std::string recentMessages[10];
+		std::string myUsername = "";
+		int portNumber = 7777;
+		std::string ipAddress = "127.0.0.1";
 		//previous char buffer
 	} data;
 
