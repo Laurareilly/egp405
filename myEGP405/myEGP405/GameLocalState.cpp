@@ -24,7 +24,7 @@ GameLocalState::GameLocalState()
 
 void GameLocalState::updateInput()
 {
-	if ((GetConsoleWindow() == GetForegroundWindow()))
+	if ((GetConsoleWindow() == GetForegroundWindow())) //the secret weapon 
 	{
 		for (int i = 0; i < 256; ++i)
 		{
@@ -41,6 +41,7 @@ void GameLocalState::updateInput()
 }
 
 
+//couldnt quickly think of a good alg for this so we hardset these 10 char conversions
 char GameLocalState::NumberToSymbol(char numChar)
 {
 	switch (numChar)
@@ -116,13 +117,7 @@ void GameLocalState::clearCurrentMessage()
 //https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/ this link showed me the MapVirtualKey and MAPVK_VK_TO_CHAR, which let me cast  to char
 void GameLocalState::updateState()
 {
-	if (!mNetworkManager->mIsServer)
-	{
-		//data.headerMessage = data.clientID;
-
-	}
 	//Not using mouse inputs for this app, but there are lots of things to check still
-
 	int index = 0;
 	int shiftHeld = data.keyboardData[VK_SHIFT];
 
@@ -251,7 +246,7 @@ void GameLocalState::display()
 	}
 	data.doesDisplay = 0;
 
-	ClearScreen(); //clear tj """""""""buffer""""""""" yoshi https://www.youtube.com/watch?v=kpk2tdsPh0A creedit to pannen
+	ClearScreen(); //clear tj """""""""buffer""""""""" yoshi https://www.youtube.com/watch?v=kpk2tdsPh0A creedit to pannen for the meme
 
 	cout << data.headerMessage << endl << endl << endl;
 
@@ -264,13 +259,13 @@ void GameLocalState::display()
 	cout << ">" << data.currentChatMessage << "<\b";
 
 	//verified with hard coding that server = 0 and client = 1
-	int indexThjing = 0;
+	int displayUserIndex = 0;
 	if (mNetworkManager->mIsServer)
 	{
-		while (data.usernameList[indexThjing] != "")
+		while (data.usernameList[displayUserIndex] != "")
 		{
-			printf("\n%s", data.usernameList[indexThjing]);
-			indexThjing++;
+			printf("\n%s", data.usernameList[displayUserIndex]);
+			displayUserIndex++;
 		}
 	}
 	

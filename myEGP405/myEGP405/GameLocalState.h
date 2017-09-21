@@ -21,7 +21,7 @@ public:
 	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
 	virtual void SetClientID(int cID) 
 	{
-		data.clientID = cID; 
+		data.clientID = (unsigned int)cID; 
 		printf("%f", data.clientID);
 	}
 	virtual void ReceiveMessage(char cUser[31], char cMessage[96], int cMsgType = 0);
@@ -44,7 +44,6 @@ public:
 		{
 			data.clientID = 0;
 			getUsernameList()[0] = data.myUsername;
-			data.headerMessage = getUsernameList()[0];
 		}
 	};
 	bool isServer;

@@ -134,7 +134,8 @@ void NetworkManager::updateServer()
 				case ID_CLIENT_NUMBER:
 				{
 					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
-					//gpGame->theState->SetClientID(clientNumber->clientNumber);
+					gpGame->theState->SetClientID(clientNumber->clientNumber);
+					//gpGame->theState->SetClientID(2);
 					//verified that we are setting SetClientID to 1!
 					//if (clientNumber->clientNumber == 1)
 					//	gpGame->theState->SetClientID(1);
