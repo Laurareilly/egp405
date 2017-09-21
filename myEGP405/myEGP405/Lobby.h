@@ -12,10 +12,7 @@ public:
 
 	virtual void updateInput();
 
-	virtual void updateNetworking()
-	{
-		//for lobby, this would just init server or attempt a connection i think
-	}
+	virtual void updateNetworking();
 
 	virtual void updateState();
 
@@ -27,7 +24,7 @@ public:
 		data.currentMessageIndex = 0;
 		data.doesDisplay = 1;
 		data.doesUpdateInput = 1;
-		data.doesUpdateNetworking = 1;
+		data.doesUpdateNetworking = 0;
 		data.doesUpdateState = 1;
 		data.myUsername = passData->data.myUsername;
 		data.portNumber = passData->data.portNumber;
@@ -57,6 +54,8 @@ private:
 	}mCurrentOption = FIRST_SCREEN;
 
 	bool wantsToBeServer = false;
+	bool successfullyConnectedToServer = false;
+	int waitFrames = 30;
 };
 
 

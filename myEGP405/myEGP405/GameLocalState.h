@@ -9,7 +9,7 @@ class GameLocalState : public ApplicationState
 public:
 	GameLocalState();
 	virtual void updateInput();
-	virtual void updateNetworking() {};
+	virtual void updateNetworking();
 	virtual void updateState();
 	virtual void display();
 	virtual void onArriveFromPrevious(ApplicationState *passData) 

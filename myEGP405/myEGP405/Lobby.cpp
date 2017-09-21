@@ -5,6 +5,8 @@
 #include <string>
 #include "GameLocalState.h"
 #include "ApplicationState.h"
+#include "GameMessage.h"
+#include "Raknet/MessageIdentifiers.h"
 
 //Game *gpGame;
 
@@ -17,6 +19,7 @@ Lobby::Lobby()
 	}
 	data.currentChatMessage = "";
 	lobbyOptionText = "Please enter your username (no spaces): ";
+	data.doesUpdateNetworking = 0;
 }
 
 void Lobby::updateInput()
@@ -202,6 +205,28 @@ void Lobby::updateState()
 		//so long space cowboy
 		data.prevKeyboardData[i] = data.keyboardData[i];
 	}
+
+	if (mCurrentOption == ESTABLISHING_CONNECTION)
+	{
+		if (successfullyConnectedToServer)
+		{
+			goToNextState(this);
+		}
+		else
+		{
+			if (waitFrames > 0)
+			{
+				waitFrames--;
+			}
+			else
+			{
+				mCurrentOption = JOINING_SERVER_IP;
+				lobbyOptionText = "Please enter the IP address, or just type \"default\"";
+				waitFrames = 30;
+			}
+		}
+	}
+
 }
 
 //I thought this was gonna be more elaborate. I'd have to make it so if this was a game, not a chat room. Or if it was a more active chatroom even
@@ -239,6 +264,8 @@ void Lobby::display()
 	{
 		cout << data.recentMessages[i] << endl;
 	}
+
+	cout << "LOBBY" << endl;
 
 	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
 	cout << ">" << data.currentChatMessage << "<\b";
@@ -317,17 +344,19 @@ void Lobby::processMessage()
 				{
 				case 49: //option 1, move to MAKING_SERVER
 				{
-					lobbyOptionText = "Enter Server Port Number";
+					lobbyOptionText = "loading";
 					PushMessageIntoQueue("You have opted to Create a New Server!");
-					mCurrentOption = MAKING_SERVER;
+					mCurrentOption = ESTABLISHING_CONNECTION;
 					wantsToBeServer = true;
+					ApplicationState::mNetworkManager->initServer(data.portNumber);
+					goToNextState(this);
 				}
 				break;
 				case 50: //option 2, move to JOINING_SERVER
 				{
-					lobbyOptionText = "Enter Server Port Number";
+					lobbyOptionText = "Please enter the IP address, or just type \"default\"";
 					PushMessageIntoQueue("You have opted to Join an Existing Server!");
-					mCurrentOption = JOINING_SERVER;
+					mCurrentOption = JOINING_SERVER_IP;
 					wantsToBeServer = false;
 				}
 				break;
@@ -431,7 +460,7 @@ void Lobby::processMessage()
 				
 				if (data.currentChatMessage == "Default" || data.currentChatMessage == "default")
 				{
-					data.ipAddress = "127.0.0.1";
+					data.ipAddress = "192.168.115.1";
 				}
 				else
 				{					
@@ -440,19 +469,48 @@ void Lobby::processMessage()
 
 				if (canMoveForward)
 				{
-					if (ApplicationState::mNetworkManager->initClient(data.portNumber, data.ipAddress))
+					data.doesUpdateNetworking = 1;
+					mCurrentOption = ESTABLISHING_CONNECTION;
+					lobbyOptionText = "Establishing Connection: Please Wait";
+
+					ApplicationState::mNetworkManager->initClient(data.portNumber, data.ipAddress);
+
+					//ApplicationState::mNetworkManager->updateServer();
+
+					//RakPeerInterface *tempPeer = ApplicationState::mNetworkManager->mpPeer;
+					//Packet *tempPacket = ApplicationState::mNetworkManager->mpPacket;
+
+					//for (tempPacket = tempPeer->Receive(); tempPacket; tempPeer->DeallocatePacket(tempPacket), tempPeer->Receive())
+					//{
+					//	switch (tempPacket->data[0])
+					//	{
+					//	case ID_CONNECTION_REQUEST_ACCEPTED:
+					//	{
+					//		// L O L?
+					//	}
+					//	break;
+					//	default:
+					//	{
+					//		// bad
+					//	}
+					//	break;
+					//	}
+					//}
+
+
+					/*if (ApplicationState::mNetworkManager->initClient(data.portNumber, data.ipAddress))
 					{
 						goToNextState(this);
 					}
 					else
-						PushMessageIntoQueue("Cannot access server with the given IP / Port Number");
+						PushMessageIntoQueue("Cannot access server with the given IP / Port Number");*/
 				}
 				else
 				{
 					PushMessageIntoQueue("Invalid IP address. You can type \"default\" if a local server is active");
 				}
 			}
-			break;
+			break;			
 			default:
 			{
 
@@ -473,4 +531,40 @@ void Lobby::goToNextState(ApplicationState *passData)
 	gpGame->theState = gpGame->theGame;
 	next = gpGame->theState;
 	next->onArriveFromPrevious(passData);
+}
+
+void Lobby::updateNetworking()
+{
+	if (!data.doesUpdateNetworking)
+		return;
+
+	
+
+	for (ApplicationState::mNetworkManager->mpPacket = ApplicationState::mNetworkManager->mpPeer->Receive(); ApplicationState::mNetworkManager->mpPacket; ApplicationState::mNetworkManager->mpPeer->DeallocatePacket(ApplicationState::mNetworkManager->mpPacket), ApplicationState::mNetworkManager->mpPeer->Receive())
+	{
+		switch (ApplicationState::mNetworkManager->mpPacket->data[0])
+		{
+		case ID_CONNECTION_REQUEST_ACCEPTED:
+		{
+			successfullyConnectedToServer = true;
+			data.doesUpdateNetworking = 0;
+		}
+		break;
+		case ID_CONNECTION_ATTEMPT_FAILED:
+		{
+			printf("suthi");
+		}
+		break;
+		default:
+		{
+			printf("\nnot working");
+		}
+		break;
+		}
+
+		int ass = 8;
+	}
+
+	//successfullyConnectedToServer = 
+
 }

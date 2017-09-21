@@ -41,7 +41,7 @@ protected:
 		std::string headerMessage;
 		std::string recentMessages[10];
 		std::string myUsername = "";
-		int portNumber = 7777;
+		int portNumber = 5546;
 		char* ipAddress = "127.0.0.1";
 		//previous char buffer
 	} data;

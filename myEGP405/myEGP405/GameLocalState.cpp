@@ -103,7 +103,10 @@ void GameLocalState::clearCurrentMessage()
 void GameLocalState::updateState()
 {
 	//Not using mouse inputs for this app, but there are lots of things to check still
-
+	if (ApplicationState::mNetworkManager->mIsServer)
+	{
+		data.headerMessage = ApplicationState::mNetworkManager->mpPeer->GetLocalIP(0);
+	}
 	int index = 0;
 	int shiftHeld = data.keyboardData[VK_SHIFT];
 
@@ -273,4 +276,9 @@ void GameLocalState::goToNextState(ApplicationState *passData)
 	gpGame->theState = gpGame->theLobby;
 	next = gpGame->theState;
 	next->onArriveFromPrevious(passData);
+}
+
+void GameLocalState::updateNetworking()
+{
+	ApplicationState::mNetworkManager->updateServer();
 }
