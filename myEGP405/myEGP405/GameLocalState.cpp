@@ -274,7 +274,6 @@ void GameLocalState::display()
 		}
 	}
 	
-
 	cout.flush();
 }
 
@@ -289,8 +288,10 @@ int GameLocalState::getNextOpenUsernameIndex()
 }
 
 void GameLocalState::insertUsernameIntoList(char cName[31], int cIndex)
-{
-	data.usernameList[cIndex] = cName;
+{	
+	strcpy(newUsername, cName);
+	data.usernameList[cIndex] = newUsername;
+	//strcpy(data.usernameList[cIndex], cName);
 	data.doesDisplay = 1;
 }
 
@@ -341,10 +342,10 @@ void GameLocalState::updateNetworking()
 	mNetworkManager->updateServer();
 }
 
-void GameLocalState::ReceiveMessage(char* cUser, char* cMessage, int cMsgType)
+void GameLocalState::ReceiveMessage(char cUser[31], char cMessage[96], int cMsgType)
 {
 	std::string userString = cUser;
-	std::string messageString = cUser;
+	std::string messageString = cMessage;
 	std::string fullString = userString + ": " + messageString;
 	data.doesDisplay = 1;
 	PushMessageIntoQueue(fullString);

@@ -24,7 +24,7 @@ public:
 		data.clientID = cID; 
 		printf("%f", data.clientID);
 	}
-	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0);
+	virtual void ReceiveMessage(char cUser[31], char cMessage[96], int cMsgType = 0);
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{
 		data.currentChatMessage = "";
@@ -43,7 +43,7 @@ public:
 		if (mNetworkManager->mIsServer)
 		{
 			data.clientID = 0;
-			insertUsernameIntoList(data.myUsername, 0);
+			getUsernameList()[0] = data.myUsername;
 			data.headerMessage = getUsernameList()[0];
 		}
 	};
@@ -56,6 +56,8 @@ public:
 
 	virtual void ClearScreen();
 	virtual char NumberToSymbol(char numChar);
+
+	char newUsername[31];
 
 private:
 

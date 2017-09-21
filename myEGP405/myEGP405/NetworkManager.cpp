@@ -95,10 +95,10 @@ void NetworkManager::updateServer()
 				{
 					printf("Our connection request has been accepted.\n");
 					gpGame->theState->AcceptedToServer();
-					//set up username packet (using terrible hard-coded values, bad bad bad)
+
+
 					UsernameMessage username[1] = { ID_USERNAME,  "", "hello" };
-					//for (int index = 0; index < 31; index++)
-					//	username[0].username[index] = myUsernameString[index];
+
 					gpGame->theState->SetSystemAddress(mpPacket->systemAddress);
 					strcpy(username[0].username, gpGame->theState->getUsername());
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
@@ -182,7 +182,7 @@ void NetworkManager::updateServer()
 						strcpy(username->message, newMessage->message);
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
-
+						gpGame->theState->ReceiveMessage(username->username, username->message);
 					}
 					else
 					{
@@ -191,6 +191,7 @@ void NetworkManager::updateServer()
 						strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true);
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
+						gpGame->theState->ReceiveMessage(username->username, username->message);
 					}
 				}
 				break;
@@ -245,12 +246,13 @@ void NetworkManager::updateServer()
 void NetworkManager::SendNetworkedMessage(char* cMessage, int cSenderID)
 {
 	ClientToServerMessage newMessage[1] = { ID_CLIENT_TO_SERVER,  cSenderID, "hello" };
+	newMessage[0].messageID = 141;
 	strcpy(newMessage[0].message, cMessage);
 
 	//mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 	if (mIsServer)
 	{
-
+		//if () //if first character is *, output message as a SERVER message
 	}
 	else
 	{

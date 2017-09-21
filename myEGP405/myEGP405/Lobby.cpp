@@ -350,7 +350,7 @@ void Lobby::processMessage()
 		//if it isn't applicable to an option from the list, discard it with a sorry message
 		//otherwise, update the list accordingly
 
-		if (data.currentMessageIndex > 0)
+		if (data.currentMessageIndex > 0 || mCurrentOption == JOINING_SERVER_IP)
 		{
 			switch (mCurrentOption) //where are they in the menus?
 			{
@@ -462,7 +462,7 @@ void Lobby::processMessage()
 				{
 					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
 					mCurrentOption = JOINING_SERVER_IP;
-					lobbyOptionText = "Please enter the IP address, or just type \"default\"";
+					lobbyOptionText = "Please enter the IP address, or just press enter";
 
 				}
 				else
@@ -475,7 +475,7 @@ void Lobby::processMessage()
 			{
 				bool canMoveForward = true;
 				
-				if (data.currentChatMessage == "Default" || data.currentChatMessage == "default")
+				if (data.currentChatMessage == "Default" || data.currentChatMessage == "default" || data.currentMessageIndex == 0)
 				{
 					data.ipAddress = "127.0.0.1";
 				}
