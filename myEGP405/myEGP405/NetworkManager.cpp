@@ -37,14 +37,14 @@ bool NetworkManager::initServer(int cPort)
 	maxClients = 20;
 	serverPort = cPort;
 	sd = new SocketDescriptor(serverPort, 0);
-	serverSuccess =	mpPeer->Startup(maxClients, sd, 1);
 	mpPeer->SetMaximumIncomingConnections(maxClients);
+	serverSuccess =	mpPeer->Startup(maxClients, sd, 1);
 	mIsServer = true;
 
 	return serverSuccess;
 }
 
-bool NetworkManager::initClient(int cPort, char* cIP)
+void NetworkManager::initClient(int cPort, char* cIP)
 {	
 	mIsServer = false;
 	sd = new SocketDescriptor();
@@ -52,7 +52,7 @@ bool NetworkManager::initClient(int cPort, char* cIP)
 
 	if (!mpPeer)
 	{
-		printf("shit");
+		printf("Peer is false");
 	}
 
 	serverPort = cPort;
@@ -60,15 +60,13 @@ bool NetworkManager::initClient(int cPort, char* cIP)
 	//need to ask for the server ip before this?
 	mpPeer->Connect(cIP, serverPort, 0, 0);
 
-	return true;
-
 }
 
 void NetworkManager::updateServer()
 {
 	for (mpPacket = mpPeer->Receive(); mpPacket; mpPeer->DeallocatePacket(mpPacket), mpPeer->Receive())
 	{
-		if ((int)(mpPacket->data[0] > 144)) //i dont know dan
+		if ((int)(mpPacket->data[0] > 144)) //For some reason client -> connect's packet hits accept, then hits enum 221, then throws an exception
 		{
 			break;
 		}
@@ -196,9 +194,9 @@ void NetworkManager::updateServer()
 					gpGame->theState->ReceiveMessage(username->username, username->message);
 				}
 				break;
-			//	case ID_NEW_INCOMING_CONNECTION:
-			//		printf("A connection is incoming.\n");
-			//		break;
+				case ID_NEW_INCOMING_CONNECTION:
+					printf("A connection is incoming.\n");
+					break;
 			//	case ID_NO_FREE_INCOMING_CONNECTIONS:
 			//		printf("The server is full.\n");
 			//		break;
@@ -228,7 +226,8 @@ void NetworkManager::updateServer()
 			//	
 			default:
 			{
-				printf("Default Constructor Hit");
+				printf("Default Constructor Hit\n");
+				printf("%f", (int)mpPacket->data[0]);
 			}
 				break;
 				//printf("Message with identifier %i has arrived.\n", packet->data[0]);

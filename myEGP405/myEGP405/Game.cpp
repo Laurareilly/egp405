@@ -7,18 +7,18 @@
 #include <stdio.h>
 
 //http://www.cplusplus.com/forum/beginner/1640/
-WORD GetConsoleTextAttribute(HANDLE hCon)
-{
-	CONSOLE_SCREEN_BUFFER_INFO con_info;
-	GetConsoleScreenBufferInfo(hCon, &con_info);
-	return con_info.wAttributes;
-}
+//WORD GetConsoleTextAttribute(HANDLE hCon)
+//{
+//	CONSOLE_SCREEN_BUFFER_INFO con_info;
+//	GetConsoleScreenBufferInfo(hCon, &con_info);
+//	return con_info.wAttributes;
+//}
 
 Game::Game()
 {
 	mpTimer = new Timer(); 
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	mDefaultColors = GetConsoleTextAttribute(hConsole);
+	//HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	//mDefaultColors = GetConsoleTextAttribute(hConsole);
 	theLobby = new Lobby();
 	theGame = new GameLocalState();
 	theState = theLobby;

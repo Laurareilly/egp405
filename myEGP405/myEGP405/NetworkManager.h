@@ -16,7 +16,7 @@ public:
 	void initializeNetwork();
 
 	bool initServer(int cPort);
-	bool initClient(int cPort, char* cIP);
+	void initClient(int cPort, char* cIP);
 	void updateServer();
 
 	void SendNetworkedMessage(char* cMessage, int cSenderID);

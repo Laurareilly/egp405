@@ -262,9 +262,9 @@ void Lobby::display()
 
 	cout << data.headerMessage << endl << endl << endl;
 	
-	gpGame->SetTextRed();
+	//gpGame->SetTextRed();
 	cout << lobbyOptionText << endl << endl;
-	gpGame->SetTextDefault();
+	//gpGame->SetTextDefault();
 
 	for (int i = 9; i >= 0; i--)
 	{
@@ -466,7 +466,7 @@ void Lobby::processMessage()
 				
 				if (data.currentChatMessage == "Default" || data.currentChatMessage == "default")
 				{
-					data.ipAddress = "192.168.115.1";
+					data.ipAddress = "127.0.0.1";
 				}
 				else
 				{					
