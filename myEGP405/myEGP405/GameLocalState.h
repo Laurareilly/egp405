@@ -14,6 +14,13 @@ public:
 	virtual void updateState();
 	virtual void display();
 	virtual void AcceptedToServer() { data.enterServer = 1; }
+	virtual char** getUsernameList() { return data.usernameList; }
+	virtual int getNextOpenUsernameIndex();
+	virtual void insertUsernameIntoList(char* cName, int cIndex);
+	virtual void SetSystemAddress(SystemAddress cAddress) { data.serverSystemAddress = cAddress; }
+	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
+	virtual void SetClientID(int cID) { data.clientID = cID; }
+	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0);
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{
 		data.currentChatMessage = "";
@@ -26,6 +33,17 @@ public:
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
 		data.headerMessage = "Welcome to UDPalooza!\nYou're live chatting now\nEnter #help for list of commands!";
+		mNetworkManager = passData->mNetworkManager;
+		data.clientID = passData->data.clientID;
+		data.serverSystemAddress = passData->data.serverSystemAddress;
+		if (mNetworkManager->mIsServer)
+		{
+			data.clientID = 0;
+			char* tempUsername = new char[data.myUsername.length() + 1];
+			strcpy(tempUsername, data.myUsername.c_str());
+			insertUsernameIntoList(tempUsername, 0);
+			data.headerMessage = getUsernameList()[0];
+		}
 	};
 	bool isServer;
 	virtual void goToNextState(ApplicationState *passData);

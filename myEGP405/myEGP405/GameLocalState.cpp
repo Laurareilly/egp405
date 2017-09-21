@@ -15,6 +15,10 @@ GameLocalState::GameLocalState()
 	{
 		data.recentMessages[i] = '\n';
 	}
+	for (int i = 0; i < 20; ++i)
+	{
+		data.usernameList[i] = "";
+	}
 	data.currentChatMessage = "";
 }
 
@@ -107,15 +111,7 @@ void GameLocalState::updateState()
 		data.recentMessages[0] = "Someone joined";
 	}
 	//Not using mouse inputs for this app, but there are lots of things to check still
-	if (ApplicationState::mNetworkManager->mIsServer)
-	{
-		data.headerMessage = ApplicationState::mNetworkManager->mpPeer->GetLocalIP(0);
-		data.doesDisplay = 1;
-	}
-	else
-	{
-		data.headerMessage = "im a client lol";
-	}
+
 	int index = 0;
 	int shiftHeld = data.keyboardData[VK_SHIFT];
 
@@ -252,6 +248,21 @@ void GameLocalState::display()
 	cout.flush();
 }
 
+int GameLocalState::getNextOpenUsernameIndex()
+{
+	for (int i = 0; i < 20; ++i)
+	{
+		if (data.usernameList[i] == "")
+			return i;
+	}
+	return -1;
+}
+
+void GameLocalState::insertUsernameIntoList(char * cName, int cIndex)
+{
+	data.usernameList[cIndex] = cName;
+}
+
 //proof of concept, move the message up with "User: " at the beginning, then allow users to type a new one
 void GameLocalState::PushMessageIntoQueue()
 {
@@ -277,6 +288,13 @@ void GameLocalState::PushMessageIntoQueue(std::string newMessage)
 
 void GameLocalState::processMessage()
 {
+	if (data.currentMessageIndex > 0)
+	{
+		char* myMessage = new char[data.currentChatMessage.length() + 1];
+		strcpy(myMessage, data.currentChatMessage.c_str());
+		mNetworkManager->SendNetworkedMessage(myMessage, data.clientID);
+		clearCurrentMessage();
+	}
 }
 
 
@@ -289,5 +307,14 @@ void GameLocalState::goToNextState(ApplicationState *passData)
 
 void GameLocalState::updateNetworking()
 {
-	ApplicationState::mNetworkManager->updateServer();
+	mNetworkManager->updateServer();
+}
+
+void GameLocalState::ReceiveMessage(char* cUser, char* cMessage, int cMsgType)
+{
+	std::string userString = cUser;
+	std::string messageString = cUser;
+	std::string fullString = userString + ": " + messageString;
+
+	PushMessageIntoQueue(fullString);
 }

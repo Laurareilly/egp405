@@ -84,51 +84,13 @@ void NetworkManager::updateServer()
 			//printf("Another client has connected.\n");
 			break;
 
-			//	case ID_USERNAME:
-			//	{
-			//		//int i;
-			//		//UsernameMessage *username = (UsernameMessage*)packet->data;
-			//		//for (i = 0; i < connectedUserCount; ++i)
-			//		//{
-			//		//	if (connectedUserList[i].messageID == 0)
-			//		//	{
-			//		//		//we are server, store username in dictionary
-			//		//		connectedUserList[i] = *username;
-			//		//		break;
-			//		//	}
-			//		//}
-			//		//printf(username->username);
-			//		//UsernameMessage newMessage[1] = { ID_NEW_CLIENT_JOIN , "silas", "heck no" };
-			//		//strcpy(newMessage[0].username, username->username);
-			//		//strcpy(newMessage[0].message, username->message);
-
-			//		////let everyone know who just joined
-			//		//username->messageID = ID_NEW_CLIENT_JOIN;
-			//		////strcpy(username->username, username->username);
-
-			//		//RakNet::SystemAddress desiredUserAddress;
-			//		//desiredUserAddress = packet->systemAddress;
-
-			//		//peer->Send((char *)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //false sends it back to the person
-			//		////peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true); //true because going to be sent to everyone
-
-			//		////send new client their identifier
-			//		//ClientNumberMessage clientNumber[1] = { ID_CLIENT_NUMBER, i }; //sending the client number grabbed from the forloop
-			//		////send
-			//		//peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false); //
-			//	}
-			//	break;
-
-			//	case ID_NEW_CLIENT_JOIN:
-			//	{
-			//		UsernameMessage *username = (UsernameMessage*)packet->data;
-			//		//printf(*username->username.c_str());
-			//		printf("Username: %s has joined.\n", username->username);
-
-			//		UsernameMessage newMessage[1] = { ID_CHAT_MESSAGE , "myname", "supergoodmessage" };
-			//		peer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
-			//	}
-			//		break;
+			case ID_NEW_CLIENT_JOIN:
+			{
+				UsernameMessage *username = (UsernameMessage*)mpPacket->data;
+				//printf(*username->username.c_str());
+				printf("Username: %s has joined.\n", username->username);
+			}
+				break;
 
 			//		//client succesfully joins server
 				case ID_CONNECTION_REQUEST_ACCEPTED: //the client receives this
@@ -139,10 +101,11 @@ void NetworkManager::updateServer()
 					UsernameMessage username[1] = { ID_USERNAME,  "", "hello" };
 					//for (int index = 0; index < 31; index++)
 					//	username[0].username[index] = myUsernameString[index];
+					gpGame->theState->SetSystemAddress(mpPacket->systemAddress);
 					strcpy(username[0].username, gpGame->theState->getUsername().c_str());
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 
-					gpGame->theState->isServer = false;
+					//gpGame->theState->isServer = false;
 				}
 					break;
 				case ID_USERNAME:
@@ -150,18 +113,87 @@ void NetworkManager::updateServer()
 					/*we are server, store username in dictionary
 					let everyone know who just joined*/
 
-					gpGame->theState->AcceptedToServer();
+					//gpGame->theState->AcceptedToServer();
 
-					//UsernameMessage *username = (UsernameMessage*)packet->data;
-					//username->messageID = ID_NEW_CLIENT_JOIN;
-					//peer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //true because 
-					//
+
+					UsernameMessage *username = (UsernameMessage*)mpPacket->data;
+					username->messageID = ID_NEW_CLIENT_JOIN;
+					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
+					int clientIDNum = gpGame->theState->getNextOpenUsernameIndex();
+
+					gpGame->theState->insertUsernameIntoList(username->username, clientIDNum);
+
+					
 					//send new client their identifier
-					//ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, 0};
+					ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, clientIDNum};
 					//send
-					//peer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true); //wait so should this be true or false
+					mpPeer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false); //wait so should this be true or false
 				}
 					break;
+				case ID_CLIENT_NUMBER:
+				{
+					
+				}
+				break;
+				case ID_CLIENT_TO_SERVER:
+				{
+					ClientToServerMessage *newMessage = (ClientToServerMessage*)mpPacket->data;
+					std::string receivedMessage = newMessage->message;
+					bool messageIsGood = false;
+					int spaceIndex = 0;
+					if (receivedMessage[0] == '@') //private message!
+					{
+						receivedMessage.erase(0, 1);
+						for (int i = 1; i < receivedMessage.length(); i++)
+						{
+							if (receivedMessage[i] == ' ')
+							{
+								messageIsGood = true;
+								spaceIndex = i;
+								break;
+							}
+						}
+
+						std::string usernameString = receivedMessage;
+						usernameString.erase(spaceIndex, usernameString.length() - spaceIndex);
+						receivedMessage.erase(0, spaceIndex + 1);
+
+						
+						int targetIndex = -1;
+						for (int i = 0; i < 20; i++)
+						{
+							if (usernameString == gpGame->theState->getUsernameList()[i])
+							{
+								targetIndex = i;
+							}
+						}
+
+						std::string tempUsernameThing = gpGame->theState->getUsernameList()[newMessage->clientID];
+						std::string recipientUsernameString = "From :" + tempUsernameThing;
+						std::string backToSenderUsernameString = "To: " + usernameString;
+
+						UsernameMessage username[1] = { ID_RECEIVE_MESSAGE, "", "hello" };
+						strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
+						strcpy(username->message, newMessage->message);
+						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
+						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
+
+					}
+					else
+					{
+						UsernameMessage username[1] = { ID_RECEIVE_MESSAGE, "", "hello" };
+						strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
+						strcpy(username->message, newMessage->message);
+						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true);
+						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
+					}
+				}
+				break;
+				case ID_RECEIVE_MESSAGE:
+				{
+
+				}
+				break;
 			//	case ID_NEW_INCOMING_CONNECTION:
 			//		printf("A connection is incoming.\n");
 			//		break;
@@ -202,6 +234,24 @@ void NetworkManager::updateServer()
 
 	}
 }
+
+void NetworkManager::SendNetworkedMessage(char* cMessage, int cSenderID)
+{
+	ClientToServerMessage newMessage[1] = { ID_CLIENT_TO_SERVER,  cSenderID, "hello" };
+	strcpy(newMessage[0].message, cMessage);
+
+	//mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
+	if (mIsServer)
+	{
+
+	}
+	else
+	{
+		//ID_CLIENT_TO_SERVER
+		mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->GetSystemAddress(), false);
+	}
+}
+
 //
 //void NetworkManager::updateClient()
 //{

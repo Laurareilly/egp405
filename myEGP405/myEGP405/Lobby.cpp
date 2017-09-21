@@ -354,7 +354,7 @@ void Lobby::processMessage()
 					PushMessageIntoQueue("You have opted to Create a New Server!");
 					mCurrentOption = ESTABLISHING_CONNECTION;
 					wantsToBeServer = true;
-					ApplicationState::mNetworkManager->initServer(data.portNumber);
+					mNetworkManager->initServer(data.portNumber);
 					goToNextState(this);
 				}
 				break;
@@ -407,7 +407,7 @@ void Lobby::processMessage()
 				if (canMoveForward)
 				{
 					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
-					if (ApplicationState::mNetworkManager->initServer(data.portNumber))
+					if (mNetworkManager->initServer(data.portNumber))
 					{
 						mCurrentOption = ESTABLISHING_CONNECTION;
 						lobbyOptionText = "Establishing Connection: Please Wait";
@@ -479,12 +479,12 @@ void Lobby::processMessage()
 					mCurrentOption = ESTABLISHING_CONNECTION;
 					lobbyOptionText = "Establishing Connection: Please Wait";
 
-					ApplicationState::mNetworkManager->initClient(data.portNumber, data.ipAddress);
+					mNetworkManager->initClient(data.portNumber, data.ipAddress);
 
-					//ApplicationState::mNetworkManager->updateServer();
+					//mNetworkManager->updateServer();
 
-					//RakPeerInterface *tempPeer = ApplicationState::mNetworkManager->mpPeer;
-					//Packet *tempPacket = ApplicationState::mNetworkManager->mpPacket;
+					//RakPeerInterface *tempPeer = mNetworkManager->mpPeer;
+					//Packet *tempPacket = mNetworkManager->mpPacket;
 
 					//for (tempPacket = tempPeer->Receive(); tempPacket; tempPeer->DeallocatePacket(tempPacket), tempPeer->Receive())
 					//{
@@ -504,7 +504,7 @@ void Lobby::processMessage()
 					//}
 
 
-					/*if (ApplicationState::mNetworkManager->initClient(data.portNumber, data.ipAddress))
+					/*if (mNetworkManager->initClient(data.portNumber, data.ipAddress))
 					{
 						goToNextState(this);
 					}
@@ -544,11 +544,11 @@ void Lobby::updateNetworking()
 	if (!data.doesUpdateNetworking)
 		return;
 
-	ApplicationState::mNetworkManager->updateServer();
+	mNetworkManager->updateServer();
 
-	/*for (ApplicationState::mNetworkManager->mpPacket = ApplicationState::mNetworkManager->mpPeer->Receive(); ApplicationState::mNetworkManager->mpPacket; ApplicationState::mNetworkManager->mpPeer->DeallocatePacket(ApplicationState::mNetworkManager->mpPacket), ApplicationState::mNetworkManager->mpPeer->Receive())
+	/*for (mNetworkManager->mpPacket = mNetworkManager->mpPeer->Receive(); mNetworkManager->mpPacket; mNetworkManager->mpPeer->DeallocatePacket(mNetworkManager->mpPacket), mNetworkManager->mpPeer->Receive())
 	{
-		switch (ApplicationState::mNetworkManager->mpPacket->data[0])
+		switch (mNetworkManager->mpPacket->data[0])
 		{
 		case ID_CONNECTION_REQUEST_ACCEPTED:
 		{

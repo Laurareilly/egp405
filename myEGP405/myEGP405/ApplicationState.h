@@ -22,7 +22,18 @@ public:
 	virtual void ClearScreen() = 0;
 	virtual char NumberToSymbol(char numChar) = 0;
 	virtual void AcceptedToServer() = 0;
+	virtual void SetClientID(int cID) = 0;
 
+	//0 = general message, 1 = PM, 2 = console message(red)
+	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) = 0;
+
+	virtual void SetSystemAddress(SystemAddress cAddress) = 0;
+	virtual SystemAddress GetSystemAddress() = 0;
+
+	virtual int getNextOpenUsernameIndex() = 0;
+	virtual void insertUsernameIntoList(char* cName, int cIndex) = 0;
+
+	virtual char** getUsernameList() = 0;
 	virtual std::string getUsername() = 0;
 
 	bool isServer;
@@ -36,6 +47,11 @@ protected:
 
 	struct ApplicationStateData
 	{
+		SystemAddress allSystemAddresses[20];
+		SystemAddress serverSystemAddress;
+
+		int clientID = -1;
+		char* usernameList[20]; //max clients is TWENTY
 		char doesUpdateInput;
 		char doesUpdateNetworking;
 		char doesUpdateState;

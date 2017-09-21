@@ -18,6 +18,14 @@ public:
 	virtual void updateState();
 
 	virtual void display();
+	virtual char** getUsernameList() { return data.usernameList; }
+	virtual void SetSystemAddress(SystemAddress cAddress) {data.serverSystemAddress = cAddress;}
+	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
+	virtual void SetClientID(int cID) { data.clientID = cID; }
+	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) {};
+
+	virtual void insertUsernameIntoList(char* cName, int cIndex) {};
+	virtual int getNextOpenUsernameIndex() { return -1; };
 	bool isServer;
 	virtual void onArriveFromPrevious(ApplicationState *passData)
 	{
@@ -31,6 +39,9 @@ public:
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
 		data.headerMessage = "Welcome to UDPalooza!";
+		mNetworkManager = passData->mNetworkManager;
+		data.clientID = passData->data.clientID;
+		data.serverSystemAddress = passData->data.serverSystemAddress;
 	}
 
 	virtual void goToNextState(ApplicationState *passData);

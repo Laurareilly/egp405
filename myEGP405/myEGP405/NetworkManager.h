@@ -18,6 +18,9 @@ public:
 	bool initServer(int cPort);
 	bool initClient(int cPort, char* cIP);
 	void updateServer();
+
+	void SendNetworkedMessage(char* cMessage, int cSenderID);
+
 	//void updateClient();
 
 	RakPeerInterface *mpPeer;
@@ -66,6 +69,13 @@ public:
 		char username[31];
 		char message[96];
 		//RakNet::SystemAddress mContactInfo;
+	};
+
+	struct ClientToServerMessage
+	{
+		char messageID;
+		unsigned int clientID;
+		char message[96];
 	};
 
 	struct ClientNumberMessage //for ID_CLIENT_NUMBER
