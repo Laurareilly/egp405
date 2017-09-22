@@ -123,7 +123,7 @@ void NetworkManager::updateServer()
 
 					UsernameMessage *username = (UsernameMessage*)mpPacket->data;
 					username->messageID = ID_NEW_CLIENT_JOIN;
-					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
+					mpPeer->Send((char*)username, sizeof(*username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
 					gpGame->theState->ReceiveMessage(username->username, " has joined!");
 
 					int clientIDNum = gpGame->theState->getNextOpenUsernameIndex();
