@@ -253,7 +253,16 @@ void GameLocalState::display()
 
 	for (int i = 9; i >= 0; i--)
 	{
+		if (data.recentMessages[i][0] == '@')
+		{
+			gpGame->SetTextPurple();
+		}
+		if (data.recentMessages[i][0] == '*')
+		{
+			gpGame->SetTextRed();
+		}
 		cout << data.recentMessages[i] << endl;
+		gpGame->SetTextDefault();
 	}
 
 	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
@@ -263,9 +272,17 @@ void GameLocalState::display()
 	int displayUserIndex = 0;
 	if (mNetworkManager->mIsServer)
 	{
+		printf("\n\nUser List:");
 		while (data.usernameList[displayUserIndex] != "")
 		{
-			printf("\n%s", data.usernameList[displayUserIndex]);
+			if (displayUserIndex == 0) //mention we're the server!
+			{
+				printf("\n%s%: %s", /*(std::string)*/data.myUsername, "SERVER!");
+			}
+			else
+			{
+				printf("\n%s", data.usernameList[displayUserIndex]);
+			}
 			displayUserIndex++;
 		}
 	}
@@ -328,6 +345,10 @@ void GameLocalState::processMessage()
 		{
 			char* myMessage = new char[data.currentChatMessage.length() + 1];
 			strcpy(myMessage, data.currentChatMessage.c_str());
+			if (mNetworkManager->mIsServer)
+			{
+				ReceiveMessage(data.myUsername, myMessage);
+			}
 			mNetworkManager->SendNetworkedMessage(myMessage, data.clientID);
 			clearCurrentMessage();
 		}
@@ -351,7 +372,19 @@ void GameLocalState::ReceiveMessage(char cUser[31], char cMessage[96], int cMsgT
 {
 	std::string userString = cUser;
 	std::string messageString = cMessage;
-	std::string fullString = userString + ": " + messageString;
+	std::string fullString = "";
+	if (cMessage[0] == '*')//the LEAST elegant way to do this delighter
+	{
+		if (messageString.length() > 1) //if ALL they typed is *, we make it a space so they jsut have a blank message with a red name (still WAYYYY cool)S
+			messageString.erase(0, 1);
+		else		
+			messageString = " ";
+		
+		fullString = '*' + userString + ": " + messageString;
+	}
+	else
+		fullString = userString + ": " + messageString;
+
 	data.doesDisplay = 1;
 	PushMessageIntoQueue(fullString);
 }

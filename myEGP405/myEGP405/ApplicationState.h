@@ -10,15 +10,6 @@
 class ApplicationState abstract //this type of state can never be used
 {
 public:
-#pragma pack (push, 1)
-	struct UsernameMessage
-	{
-		char messageID;
-		char username[31];
-		char message[96];
-		RakNet::SystemAddress mContactInfo;
-	};
-#pragma pack(pop)
 
 	friend class Lobby;
 	friend class GameLocalState;
@@ -48,16 +39,15 @@ public:
 
 	bool isServer;
 
-
 	ApplicationState() { mNetworkManager = new NetworkManager(); }
 	~ApplicationState() { delete mNetworkManager; mNetworkManager = NULL; }
 
+	SystemAddress allSystemAddresses[20]; //why isnt this working
 protected:
 	ApplicationState *next, *previous;
 
 	struct ApplicationStateData
 	{
-		SystemAddress allSystemAddresses[20];
 		SystemAddress serverSystemAddress;
 
 		unsigned int clientID = 1;
@@ -74,7 +64,7 @@ protected:
 		std::string headerMessage;
 		std::string recentMessages[10];
 		char myUsername[31];
-		int portNumber = 5546;
+		int portNumber = 5546; //hard setting this beautiful port numbre that works consistently as far as i can tell
 		char* ipAddress = "127.0.0.1";
 		//previous char buffer
 	} data;

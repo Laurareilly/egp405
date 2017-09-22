@@ -77,6 +77,13 @@ void NetworkManager::updateServer()
 			break;
 		case ID_REMOTE_CONNECTION_LOST:
 			//printf("Another client has lost the connection.\n");
+
+			//what I would like to do here is send a message to all users
+			//they would receive it and send back a message with their clientID (in the background, they don't know about this)
+			//I'd check this against the list of clientIDs, find the one that is missing, and
+				//remove the info for that one
+			//This is mostly a time constraint because the fundamentals of the project took a long ass time to fix
+
 			break;
 		case ID_REMOTE_NEW_INCOMING_CONNECTION:
 			//printf("Another client has connected.\n");
@@ -85,8 +92,8 @@ void NetworkManager::updateServer()
 			case ID_NEW_CLIENT_JOIN:
 			{
 				UsernameMessage *username = (UsernameMessage*)mpPacket->data;
-				//printf(*username->username.c_str());
-				printf("Username: %s has joined.\n", username->username);
+
+				gpGame->theState->ReceiveMessage(username->username, " has joined!");
 			}
 				break;
 
@@ -117,11 +124,13 @@ void NetworkManager::updateServer()
 					UsernameMessage *username = (UsernameMessage*)mpPacket->data;
 					username->messageID = ID_NEW_CLIENT_JOIN;
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
-
+					gpGame->theState->ReceiveMessage(username->username, " has joined!");
 
 					int clientIDNum = gpGame->theState->getNextOpenUsernameIndex();
 					char newUsername[31];
 					strncpy(newUsername, username->username, 31);
+
+					gpGame->theState->allSystemAddresses[clientIDNum] = mpPacket->systemAddress;
 
 					gpGame->theState->insertUsernameIntoList(username->username, clientIDNum);
 
@@ -175,15 +184,27 @@ void NetworkManager::updateServer()
 						}
 
 						std::string tempUsernameThing = gpGame->theState->getUsernameList()[newMessage->clientID];
-						std::string recipientUsernameString = "From :" + tempUsernameThing;
-						std::string backToSenderUsernameString = "To: " + usernameString;
+						std::string recipientUsernameString = "@From " + tempUsernameThing;
+						std::string backToSenderUsernameString = "@To " + usernameString;
 
 						UsernameMessage username[1] = { ID_RECEIVE_MESSAGE, "", "hello" };
-						strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
-						strcpy(username->message, newMessage->message);
+						//strcpy(username->username, gpGame->theState->getUsernameList()[newMessage->clientID]);
+
+
+						//send it back
+						strcpy(username->username, backToSenderUsernameString.c_str());
+						strcpy(username->message, receivedMessage.c_str());
 						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
-						mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
-						gpGame->theState->ReceiveMessage(username->username, username->message);
+
+
+						//send it to the desired recipient
+						if (targetIndex != -1)
+						{
+							strcpy(username->username, recipientUsernameString.c_str());
+							strcpy(username->message, receivedMessage.c_str());
+							mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->allSystemAddresses[targetIndex], false);
+							gpGame->theState->ReceiveMessage(username->username, username->message);
+						}
 					}
 					else
 					{
@@ -246,18 +267,19 @@ void NetworkManager::updateServer()
 
 void NetworkManager::SendNetworkedMessage(char* cMessage, int cSenderID)
 {
-	ClientToServerMessage newMessage[1] = { ID_CLIENT_TO_SERVER,  cSenderID, "hello" };
-	newMessage[0].messageID = 141;
-	strcpy(newMessage[0].message, cMessage);
-
 	//mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 	if (mIsServer)
 	{
-		//if () //if first character is *, output message as a SERVER message
+		UsernameMessage newMessage[1] = { ID_RECEIVE_MESSAGE, "" , "hello" };
+		strcpy(newMessage[0].username, gpGame->theState->getUsername());
+		strcpy(newMessage[0].message, cMessage);
+		mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, UNASSIGNED_SYSTEM_ADDRESS, true);
 	}
 	else
 	{
 		//ID_CLIENT_TO_SERVER
+		ClientToServerMessage newMessage[1] = { ID_CLIENT_TO_SERVER,  cSenderID, "hello" };
+		strcpy(newMessage[0].message, cMessage);
 		mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->GetSystemAddress(), false);
 	}
 }
