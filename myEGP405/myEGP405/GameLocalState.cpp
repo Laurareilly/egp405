@@ -216,10 +216,11 @@ void GameLocalState::updateState()
 		data.prevKeyboardData[i] = data.keyboardData[i];
 	}
 
-	if (!data.doesUpdateNetworking)
-	{
-		printf("bad");
-	}
+}
+
+std::string HelpMessage()
+{
+	return "@username Message will whisper to user. Start a message with * to make it RED!";
 
 }
 
@@ -300,6 +301,7 @@ void GameLocalState::PushMessageIntoQueue()
 
 	data.recentMessages[0] = "User: " + data.currentChatMessage + "\n";
 	clearCurrentMessage();
+	data.doesDisplay = 1;
 }
 
 void GameLocalState::PushMessageIntoQueue(std::string newMessage)
@@ -311,16 +313,24 @@ void GameLocalState::PushMessageIntoQueue(std::string newMessage)
 
 	data.recentMessages[0] = newMessage + '\n';
 	clearCurrentMessage();
+	data.doesDisplay = 1;
 }
 
 void GameLocalState::processMessage()
 {
 	if (data.currentMessageIndex > 0)
 	{
-		char* myMessage = new char[data.currentChatMessage.length() + 1];
-		strcpy(myMessage, data.currentChatMessage.c_str());
-		mNetworkManager->SendNetworkedMessage(myMessage, data.clientID);
-		clearCurrentMessage();
+		if (data.currentChatMessage == "#help")
+		{
+			PushMessageIntoQueue(HelpMessage());
+		}
+		else
+		{
+			char* myMessage = new char[data.currentChatMessage.length() + 1];
+			strcpy(myMessage, data.currentChatMessage.c_str());
+			mNetworkManager->SendNetworkedMessage(myMessage, data.clientID);
+			clearCurrentMessage();
+		}
 	}
 }
 

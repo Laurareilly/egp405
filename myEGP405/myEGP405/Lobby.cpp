@@ -273,9 +273,9 @@ void Lobby::display()
 
 	cout << data.headerMessage << endl << endl << endl;
 	
-	//gpGame->SetTextRed();
+	gpGame->SetTextRed();
 	cout << lobbyOptionText << endl << endl;
-	//gpGame->SetTextDefault();
+	gpGame->SetTextDefault();
 
 	for (int i = 9; i >= 0; i--)
 	{
