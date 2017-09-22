@@ -1,10 +1,10 @@
-#pragma once
-
-#include "GameMessage.h"
-
-class Chatroom
-{
-	GameMessages GameMessage;
-
-
-};
+//#pragma once
+//
+//#include "GameMessage.h"
+//
+//class Chatroom
+//{
+//	GameMessages GameMessage;
+//
+//
+//};

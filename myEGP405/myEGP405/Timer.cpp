@@ -1,4 +1,13 @@
+/* Timer - high accuracy timer - uses Large Integer to prevent rollover
+
+Dean Lawson
+Champlain College
+2011
+*/
+
 #include "Timer.h"
+
+
 
 Timer::Timer()
 	:mElapsedTime(0.0)
