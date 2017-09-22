@@ -36,7 +36,7 @@ public:
 		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
-		data.headerMessage = "Welcome to UDPalooza!\nYou're live chatting now\nEnter #help for list of commands!";
+		data.headerMessage = "Welcome to UDPalooza!\nYou're live chatting now\nEnter #help for list of commands or #quit to leave!";
 		mNetworkManager = passData->mNetworkManager;
 		data.clientID = passData->data.clientID;
 		data.serverSystemAddress = passData->data.serverSystemAddress;

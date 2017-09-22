@@ -47,7 +47,8 @@ public:
 		ID_CLIENT_TO_SERVER,		//Clients exclusively send this, but will never receive and interpret it
 		ID_RECEIVE_MESSAGE,			//Server received ID_CtS, and determined that the message isn't a DM. This is then sent by server, and interpreted by clients
 		ID_RECEIVE_DIRECT_MESSAGE,	//Server received ID_CtS, and determined it was a DM. This is sent back to the sender, and is sent to the recipient of the DM (PURPLE)
-		ID_SERVER_MESSAGE			//Sent by Server, received by Clients, displayed in all red
+		ID_SERVER_MESSAGE,			//Sent by Server, received by Clients, displayed in all red
+		ID_CLIENT_LEAVE
 	};
 
 	enum RoomState

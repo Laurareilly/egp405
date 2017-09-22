@@ -220,7 +220,7 @@ void GameLocalState::updateState()
 
 std::string HelpMessage()
 {
-	return "@username Message will whisper to user. Start a message with * to make it RED!";
+	return "SHORTCUTS:\n @ followed by a username whispers to that user.\nStart a message with * to make it RED!";
 
 }
 
@@ -340,6 +340,11 @@ void GameLocalState::processMessage()
 		if (data.currentChatMessage == "#help")
 		{
 			PushMessageIntoQueue(HelpMessage());
+		}
+		if (data.currentChatMessage == "#quit")
+		{
+			gpGame->requestExit();
+			mNetworkManager->SendNetworkedMessage(" has disconnected. ", data.clientID);
 		}
 		else
 		{

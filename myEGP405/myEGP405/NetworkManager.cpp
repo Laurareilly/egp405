@@ -117,10 +117,6 @@ void NetworkManager::updateServer()
 				{
 					/*we are server, store username in dictionary
 					let everyone know who just joined*/
-
-					//gpGame->theState->AcceptedToServer();
-
-
 					UsernameMessage *username = (UsernameMessage*)mpPacket->data;
 					username->messageID = ID_NEW_CLIENT_JOIN;
 					mpPeer->Send((char*)username, sizeof(*username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
@@ -223,36 +219,14 @@ void NetworkManager::updateServer()
 					gpGame->theState->ReceiveMessage(username->username, username->message);
 				}
 				break;
-				case ID_NEW_INCOMING_CONNECTION:
-					printf("A connection is incoming.\n");
+				case ID_NO_FREE_INCOMING_CONNECTIONS:
+					printf("The server is full.\n");
 					break;
-			//	case ID_NO_FREE_INCOMING_CONNECTIONS:
-			//		printf("The server is full.\n");
-			//		break;
-			//	case ID_DISCONNECTION_NOTIFICATION:
-			//		if (isServer) {
-			//			printf("A client has disconnected.\n");
-			//		}
-			//		else {
-			//			printf("We have been disconnected.\n");
-			//		}
-			//		break;
-			//	case ID_CONNECTION_LOST:
-			//		if (isServer) {
-			//			printf("A client lost the connection.\n");
-			//		}
-			//		else {
-			//			printf("Connection lost.\n");
-			//		}
-			//		break;
-			//		*/
-			//	case ID_CHAT_MESSAGE: //server receives this, AND THE CLIENT THEY BOTH DO!!!
-			//	{
-			//		UsernameMessage *message = (UsernameMessage*)(packet->data);
-			//		printf("\n %s \n", message->username);
-			//	}
-			//	break;
-			//	
+				case ID_DISCONNECTION_NOTIFICATION:
+					//let everyone know someone left
+					printf("someone has left bye :(");
+					//gpGame->theState->ReceiveMessage(username->username, " has LEFT");
+					break;		
 			default:
 			{
 				printf("Default Constructor Hit\n");
