@@ -103,6 +103,6 @@ public:
 private:
 
 
-	unsigned int maxClients = 10;
+	unsigned int maxClients = 1;
 	unsigned int serverPort = 5546;
 };

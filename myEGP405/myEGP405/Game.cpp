@@ -49,7 +49,10 @@ void Game::processLoop()
 		//render(theState);
 
 		theState->updateInput();
-		theState->updateNetworking();
+
+		if (!theState->getIsLocal())
+			theState->updateNetworking();
+
 		theState->updateState();
 		theState->display();
 

@@ -7,12 +7,13 @@
 #include "ApplicationState.h"
 #include "GameMessage.h"
 #include "Raknet/MessageIdentifiers.h"
+#include <fstream>
 
 //Game *gpGame;
 
 Lobby::Lobby()
 {
-	data.headerMessage = "Welcome to UDPalooza!";
+	data.headerMessage = "Welcome to Tic Tac Toe (clevger name foming later)!";
 	for (int i = 0; i < 10; ++i) //our recent messages are blank (user hasnt input anything)
 	{
 		data.recentMessages[i] = '\n';
@@ -269,18 +270,31 @@ void Lobby::display()
 	}
 	data.doesDisplay = 0;
 
-	ClearScreen(); //clear tj """""""""buffer""""""""" yoshi https://www.youtube.com/watch?v=kpk2tdsPh0A creedit to pannen
+	ClearScreen(); //bye
 
 	cout << data.headerMessage << endl << endl << endl;
 	
 	gpGame->SetTextRed();
-	cout << lobbyOptionText << endl << endl;
-	gpGame->SetTextDefault();
+	cout << lobbyOptionText << endl << endl << endl << endl << endl << endl << endl << endl << endl;
 
-	for (int i = 9; i >= 0; i--)
+	cout << data.recentMessages[0] << endl;
+
+	//uncomment and resize width of window until u find the secret (DONT LOOK IN NOTEPAD, IS CHEATING)
+	/*ifstream myfile;
+	myfile.open("branchtexs.txt");
+	string reder;
+	while (myfile.good())
+	{
+		myfile >> reder;
+		cout << reder;
+	}
+	myfile.close();*/
+
+	gpGame->SetTextDefault();
+	/*for (int i = 9; i >= 0; i--)
 	{
 		cout << data.recentMessages[i] << endl;
-	}
+	}*/
 
 	cout << "LOBBY" << endl;
 
@@ -337,7 +351,7 @@ void Lobby::processMessage()
 			strcpy(data.myUsername, data.currentChatMessage.c_str());
 			PushMessageIntoQueue("Wonderful! Your name is now: " + data.currentChatMessage);
 			//clearCurrentMessage();
-			lobbyOptionText = "Type a number to choose one of the options below:\n(1) Start a Server\n(2) Join a Server\n(3) Quit Application"; //later I'd like a change username option if time permits
+			lobbyOptionText = "Type a number to choose one of the options below:\n(1) Play Local Game\n(2) Play Online\n(3) Quit Application"; //later I'd like a change username option if time permits
 		}
 		else
 		{
@@ -356,25 +370,20 @@ void Lobby::processMessage()
 			{
 			case FIRST_SCREEN:
 			{
-				//just look at the first character. If they type 123 then it'll be option 1. Just for functionality for now, would like to improve if time permits
 				switch (data.currentChatMessage[0])
 				{
 				case 49: //option 1, move to MAKING_SERVER
 				{
-					lobbyOptionText = "loading";
-					PushMessageIntoQueue("You have opted to Create a New Server!");
-					mCurrentOption = ESTABLISHING_CONNECTION;
-					wantsToBeServer = true;
-					mNetworkManager->initServer(data.portNumber);
+					//play local
+					data.isLocal = 1;
 					goToNextState(this);
 				}
 				break;
 				case 50: //option 2, move to JOINING_SERVER
 				{
-					lobbyOptionText = "Please enter the IP address, or just type \"default\"";
-					PushMessageIntoQueue("You have opted to Join an Existing Server!");
-					mCurrentOption = JOINING_SERVER_IP;
-					wantsToBeServer = false;
+					lobbyOptionText = "Online Game: Type a number to choose one of the options below:\n(1) Host Game\n(2) Join Game\n(3) Quit Application";
+					PushMessageIntoQueue("You have opted to play Online!");
+					mCurrentOption = CHOSE_NETWORKED_GAME;
 				}
 				break;
 				case 51: //option 3 say goodbye and exit
@@ -392,82 +401,42 @@ void Lobby::processMessage()
 				}
 			}
 			break;
-			case MAKING_SERVER:
+			case CHOSE_NETWORKED_GAME:
 			{
-				bool canMoveForward = true;
-				//make sure it's an int with less than 5 characters
-				if (data.currentMessageIndex > 5)
+				data.isLocal = 0;
+				//just look at the first character. If they type 123 then it'll be option 1. Just for functionality for now, would like to improve if time permits
+				switch (data.currentChatMessage[0])
 				{
-					canMoveForward = false;
+				case 49: //option 1, move to MAKING_SERVER
+				{
+					lobbyOptionText = "loading";
+					PushMessageIntoQueue("You have opted to Create a New Game!");
+					mCurrentOption = ESTABLISHING_CONNECTION;
+					wantsToBeServer = true;
+					mNetworkManager->initServer(data.portNumber);
+					goToNextState(this);
 				}
-				for (int i = 0; i < data.currentMessageIndex; i++)
+				break;
+				case 50: //option 2, move to JOINING_SERVER
 				{
-					if (data.currentChatMessage[i] < 48 || data.currentChatMessage[i] > 57) //not a number
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					data.portNumber = stoi(data.currentChatMessage);
-					if (data.portNumber > 65535)
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
-					if (mNetworkManager->initServer(data.portNumber))
-					{
-						mCurrentOption = ESTABLISHING_CONNECTION;
-						lobbyOptionText = "Establishing Connection: Please Wait";
-						goToNextState(this);
-					}
-					else
-					{
-						PushMessageIntoQueue("Server could not be made at given Port Number. (May already exist?)");
-					}
-				}
-				else
-				{
-					PushMessageIntoQueue("Invalid Option. Please type a whole number smaller than 65535 (no spaces).");
-				}
-			}
-			break;
-			case JOINING_SERVER:
-			{
-				bool canMoveForward = true;
-				//make sure it's an int with less than 5 characters
-				if (data.currentMessageIndex > 5)
-				{
-					canMoveForward = false;
-				}
-				for (int i = 0; i < data.currentMessageIndex; i++)
-				{
-					if (data.currentChatMessage[i] < 48 || data.currentChatMessage[i] > 57) //not a number
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					data.portNumber = stoi(data.currentChatMessage);
-					if (data.portNumber > 65535)
-					{
-						canMoveForward = false;
-					}
-				}
-				if (canMoveForward)
-				{
-					PushMessageIntoQueue("Port Number set to: " + data.currentChatMessage);
+					lobbyOptionText = "Enter an IP (or just press RETURN to join localhost)";
+					PushMessageIntoQueue("You have opted to Join an Existing Server!");
 					mCurrentOption = JOINING_SERVER_IP;
-					lobbyOptionText = "Please enter the IP address, or just press enter";
-
+					wantsToBeServer = false;
 				}
-				else
+				break;
+				case 51: //option 3 say goodbye and exit
 				{
-					PushMessageIntoQueue("Invalid Option. Please type a whole number smaller than 65535 (no spaces).");
+					PushMessageIntoQueue("Sorry to see you go :(\n");
+					printf("\n");
+					gpGame->requestExit();
+				}
+				break;
+				default: //not an option
+				{
+					PushMessageIntoQueue("Invalid Option. Please type a number that corresponds to an item in the list.");
+				}
+				break;
 				}
 			}
 			break;
@@ -496,23 +465,6 @@ void Lobby::processMessage()
 
 					//RakPeerInterface *tempPeer = mNetworkManager->mpPeer;
 					//Packet *tempPacket = mNetworkManager->mpPacket;
-
-					//for (tempPacket = tempPeer->Receive(); tempPacket; tempPeer->DeallocatePacket(tempPacket), tempPeer->Receive())
-					//{
-					//	switch (tempPacket->data[0])
-					//	{
-					//	case ID_CONNECTION_REQUEST_ACCEPTED:
-					//	{
-					//		// L O L?
-					//	}
-					//	break;
-					//	default:
-					//	{
-					//		// bad
-					//	}
-					//	break;
-					//	}
-					//}
 
 
 					/*if (mNetworkManager->initClient(data.portNumber, data.ipAddress))

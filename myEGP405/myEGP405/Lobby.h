@@ -37,6 +37,8 @@ public:
 	virtual void SetClientID(int cID) { data.clientID = cID; }
 	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) {};
 
+	virtual int getIsLocal() { return data.isLocal; }
+
 	virtual void insertUsernameIntoList(char* cName, int cIndex) {};
 	virtual int getNextOpenUsernameIndex() { return -1; };
 	bool isServer;
@@ -44,6 +46,7 @@ public:
 
 	virtual void onArriveFromPrevious(ApplicationState *passData)
 	{
+		data.isLocal = passData->data.isLocal;
 		data.currentChatMessage = "";
 		data.currentMessageIndex = 0;
 		data.doesDisplay = 1;
@@ -73,11 +76,12 @@ private:
 	std::string lobbyOptionText;
 	enum CurrentChoice
 	{
-		FIRST_SCREEN,
-		MAKING_SERVER,
-		JOINING_SERVER,
-		JOINING_SERVER_IP,
-		ESTABLISHING_CONNECTION,
+		FIRST_SCREEN, //local, network, quit
+		CHOSE_NETWORKED_GAME, //join or host
+		//MAKING_SERVER, //host automatically does this (it gets skipped)
+		//JOINING_SERVER, //skip thise
+		JOINING_SERVER_IP, //enter an IP, then it enters Estalbishing connectiohn, and when it's in here it tries to connect for 30 frames and then jumps back to joining srver IP
+		ESTABLISHING_CONNECTION, //no input is considered here, just waits for 30 frames OR connects within tat time
 	}mCurrentOption = FIRST_SCREEN;
 
 	bool wantsToBeServer = false;

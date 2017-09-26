@@ -2,7 +2,7 @@
 Project 1
 EGP 405-02
 Laura Reilly -- 0972157
-Robert Mitchell -- oh no
+Robert Mitchell -- 0935286
 
 We certify that this work is entirely our own.
 The assessor of this project may reproduce this
@@ -32,14 +32,20 @@ public:
 	virtual void insertUsernameIntoList(char cName[31], int cIndex);
 	virtual void SetSystemAddress(SystemAddress cAddress) { data.serverSystemAddress = cAddress; }
 	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
+
+	virtual int getIsLocal() { return data.isLocal; }
+
 	virtual void SetClientID(int cID) 
 	{
 		data.clientID = (unsigned int)cID; 
 		printf("%f", data.clientID);
 	}
 	virtual void ReceiveMessage(char cUser[31], char cMessage[96], int cMsgType = 0);
+	virtual void ReceiveSlotInput(int cSlot);
+
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{
+		data.isLocal = passData->data.isLocal;
 		data.currentChatMessage = "";
 		data.currentMessageIndex = 0;
 		data.doesDisplay = 1;
@@ -49,7 +55,10 @@ public:
 		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
-		data.headerMessage = "Welcome to UDPalooza!\nYou're live chatting now\nEnter #help for list of commands or #quit to leave!";
+		if (data.isLocal)
+			data.headerMessage = "Youre in-game!\nWASD for P1 | IJKL for P2\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
+		else
+			data.headerMessage = "Youre in-game!\nWASD to choose slot on game board\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
 		mNetworkManager = passData->mNetworkManager;
 		data.clientID = passData->data.clientID;
 		data.serverSystemAddress = passData->data.serverSystemAddress;
@@ -75,7 +84,17 @@ public:
 	//as always, I learned a lot about C from this project even though I'm POSITIVE this is improper 
 
 private:
+	bool p1Up, p1Down, p1Left, p1Right, enterPressed, escPressed, p2Up, p2Down, p2Left, p2Right; //p2 will be IJKL or arrow keys probbly
+	void updateStateLocalGame();
+	void updateStateNetworkedGame();
 
+	bool validateMove();
+	void setMove();
+
+	int slotIndex = 0; //read from left to right, top to bottom 0 - 8
+	unsigned int playerTurn = 0; //0 is player 1 ofc. In a networked game, compare to clientID for validating input
+	char slotArray[9];
+	int slotData[9];
 };
 
 

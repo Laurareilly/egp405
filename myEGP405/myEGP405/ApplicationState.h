@@ -21,7 +21,6 @@ and/or communicate a copy of this project to a plagiarism
 class ApplicationState abstract //this type of state can never be used
 {
 public:
-
 	friend class Lobby;
 	friend class GameLocalState;
 	virtual void updateInput() = 0;
@@ -45,6 +44,8 @@ public:
 	virtual int getNextOpenUsernameIndex() = 0;
 	virtual void insertUsernameIntoList(char* cName, int cIndex) = 0;
 
+	virtual int getIsLocal() = 0;
+
 	virtual char** getUsernameList() = 0;
 	virtual char* getUsername() = 0;
 
@@ -60,7 +61,7 @@ protected:
 	struct ApplicationStateData
 	{
 		SystemAddress serverSystemAddress;
-
+		unsigned int isLocal = 1; // 0 means networked
 		unsigned int clientID = 1;
 		char* usernameList[20]; //max clients is TWENTY
 		char doesUpdateInput;

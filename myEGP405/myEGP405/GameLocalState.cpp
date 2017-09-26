@@ -20,6 +20,18 @@ GameLocalState::GameLocalState()
 		data.usernameList[i] = "";
 	}
 	data.currentChatMessage = "";
+	int i = 0;
+	for (i = 0; i < 6; ++i)
+	{
+		slotArray[i] = '_';
+		slotData[i] = -1;
+	}
+	for (i = 6; i < 9; ++i)
+	{
+		slotArray[i] = ' ';
+		slotData[i] = -1;
+	}
+
 }
 
 void GameLocalState::updateInput()
@@ -112,102 +124,196 @@ void GameLocalState::clearCurrentMessage()
 	data.currentMessageIndex = 0;
 }
 
-//THANKS TO COLIN BRADY FOR THIS LINK BELOW AND FOR SUGGESTING USING GETASYNCKEYSTATE INSTEAD OF SDL
-//https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
-//https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/ this link showed me the MapVirtualKey and MAPVK_VK_TO_CHAR, which let me cast  to char
-void GameLocalState::updateState()
+void GameLocalState::updateStateLocalGame()
 {
-	//Not using mouse inputs for this app, but there are lots of things to check still
-	int index = 0;
-	int shiftHeld = data.keyboardData[VK_SHIFT];
+	//Local game specific input booleans
+	p2Up = (data.keyboardData[0x49] && !data.prevKeyboardData[0x49]); //I
+	p2Down = (data.keyboardData[0x4B] && !data.prevKeyboardData[0x4B]); //K
+	p2Left = (data.keyboardData[0x4A] && !data.prevKeyboardData[0x4A]); //J
+	p2Right = (data.keyboardData[0x4C] && !data.prevKeyboardData[0x4C]); //L
 
-	//I'm kinda confident I understand why this works, but I might explain it wrong
-	//I believe keyboardData has 256 switches, 1 for each possible input. but the value at 0x40 is undefined, and that's kinda dumb.
-	//If, between the values for A-Z (or whatever for loop we're in), keyboard is "true"/"pressed down", we will push its character to the string we're typing
-	//Then, we will update doesDisplay so we refresh the console and display the new data in the next function
-
-	//message size limit is 95 characters, so I'll enforce that on everything except Enter and Backspace (I need the shift boolean above for backspace's shortcut)
-	if (data.currentMessageIndex < 96)
+	if (escPressed)
 	{
-		//first, we will check for the letters A-Z (I'll add more once I prove this works)
-		//link above says A Key is 0x41, z Key is 0x5A, so we'll parse through those values
-		for (index = 0x41; index <= 0x5A; ++index)//using ++index cause dan likes it
+
+	}
+
+	if (playerTurn == 0)
+	{
+		if (p1Up)
 		{
-			if (data.keyboardData[index] && !data.prevKeyboardData[index]) //make sure it isn't just held down!
-			{
-				//we will append this character to our string!
-				data.currentChatMessage += MapVirtualKey(index, MAPVK_VK_TO_CHAR);
-
-				if (!shiftHeld)
-					data.currentChatMessage[data.currentMessageIndex] += 32;
-
-				//increment currentMessageIndex
-				data.currentMessageIndex++;
-
-				//we need to tell our display() to clear this frame and redraw
-				data.doesDisplay = 1;
-			}
+			slotIndex -= 3;
 		}
-
-		//For menus, we should have 0-9. I don't think this is the same as for the numpad values. so dont try and use those it'll break my perfect inputmanager
-		for (index = 0x30; index <= 0x39; ++index)//using ++index cause dan likes it
+		else if (p1Down)
 		{
-			if (data.keyboardData[index] && !data.prevKeyboardData[index])//make sure it isn't just held down!
-			{
-				//we will append this character to our string!
-				data.currentChatMessage += MapVirtualKey(index, MAPVK_VK_TO_CHAR);
-
-				if (shiftHeld)
-					data.currentChatMessage[data.currentMessageIndex] = NumberToSymbol(data.currentChatMessage[data.currentMessageIndex]);
-
-				//increment currentMessageIndex
-				data.currentMessageIndex++;
-
-				//we need to tell our display() to clear this frame and redraw
-				data.doesDisplay = 1;
-			}
+			slotIndex += 3;
 		}
+		if (slotIndex < 0)
+			slotIndex += 9;
+		if (slotIndex > 8)
+			slotIndex -= 9;
 
-		//Now, for some specifics. and I'm not giving users the \ key cause theyll hack my chat room or something.
-		//Users for right now need Enter (to push their message through) and backspace (to delete that shit they didn't like);
-
-		if (data.keyboardData[VK_SPACE] && !data.prevKeyboardData[VK_SPACE])//make sure it isn't just held down!
+		if (p1Right)
 		{
-			data.currentChatMessage += VK_SPACE;
+			slotIndex++;
+			if (slotIndex % 3 == 0)
+				slotIndex -= 3;
+		}
+		else if (p1Left)
+		{
+			slotIndex--;
+			if ((slotIndex + 4) % 3 == 0)
+				slotIndex += 3;
+		}
+	}
+	else if (playerTurn == 1)
+	{
+		if (p2Up)
+		{
+			slotIndex -= 3;
+		}
+		else if (p2Down)
+		{
+			slotIndex += 3;
+		}
+		if (slotIndex < 0)
+			slotIndex += 9;
+		if (slotIndex > 8)
+			slotIndex -= 9;
 
-			//increment currentMessageIndex
-			data.currentMessageIndex++;
-
-			//we need to tell our display() to clear this frame and redraw
-			data.doesDisplay = 1;
+		if (p2Right)
+		{
+			slotIndex++;
+			if (slotIndex % 3 == 0)
+				slotIndex -= 3;
+		}
+		else if (p2Left)
+		{
+			slotIndex--;
+			if ((slotIndex + 4) % 3 == 0)
+				slotIndex += 3;
 		}
 	}
 
 
-	if (data.keyboardData[VK_RETURN] && !data.prevKeyboardData[VK_RETURN])//make sure it isn't just held down!
+	if (enterPressed)//make sure it isn't just held down!
+	{
+		if (validateMove())
+		{
+			setMove();
+		}
+		else
+		{
+			data.doesDisplay = 1;
+			data.recentMessages[0] = "Invalid Move! Please try a different slot!";
+		}
+	}
+}
+
+void GameLocalState::updateStateNetworkedGame()
+{
+	//Additional networking inputs go here (PRESS 1-9 FOR FUN COLORS?)
+	if (escPressed)
+	{
+
+	}
+
+	if (playerTurn != data.clientID)
+	{
+		return;
+	}
+
+	if (p1Up)
+	{
+		slotIndex -= 3;
+	}
+	else if (p1Down)
+	{
+		slotIndex += 3;
+	}
+	if (slotIndex < 0)
+		slotIndex += 9;
+	if (slotIndex > 8)
+		slotIndex -= 9;
+
+	if (p1Right)
+	{
+		slotIndex++;
+		if (slotIndex % 3 == 0)
+			slotIndex -= 3;
+	}
+	else if (p1Left)
+	{
+		slotIndex--;
+		if ((slotIndex + 4) % 3 == 0)
+			slotIndex += 3;
+	}
+
+
+	if (enterPressed)//make sure it isn't just held down!
 	{
 		//this is a function, not a character to be inserted into the string
 		processMessage();
 	}
+}
 
-	//tried using \b but that caused so many issues. cant imagine how bad it would've been to send that through a packet, probably wouldnt be received well
-	if (data.keyboardData[VK_BACK] && !data.prevKeyboardData[VK_BACK])//make sure it isn't just held down! this might be ok with backspace actually
+void GameLocalState::updateState()
+{
+	//All input checks required for both local and networked games
+	p1Up = (data.keyboardData[0x57] && !data.prevKeyboardData[0x57]); //W
+	p1Down = (data.keyboardData[0x53] && !data.prevKeyboardData[0x53]); //S
+	p1Left = (data.keyboardData[0x41] && !data.prevKeyboardData[0x41]); //A
+	p1Right = (data.keyboardData[0x44] && !data.prevKeyboardData[0x44]); //D
+
+	enterPressed = (data.keyboardData[VK_RETURN] && !data.prevKeyboardData[VK_RETURN]); //Enter
+	escPressed = (data.keyboardData[VK_ESCAPE] && !data.prevKeyboardData[VK_ESCAPE]); //Escape
+
+	if (data.isLocal)
 	{
-		if (data.currentMessageIndex == 0) //Y'A'INT deleting 0
-			return;
+		updateStateLocalGame();
+	}
+	else
+	{
+		updateStateNetworkedGame();
+	}
 
-		if (shiftHeld)
+	if (p1Up || p1Down || p1Left || p1Right || enterPressed || escPressed || p2Up || p2Down || p2Left || p2Right)
+	{
+		data.doesDisplay = 1;
+
+		//update slotArray with correct strings
+		for (int i = 0; i < 9; i++)
 		{
-			clearCurrentMessage();
+			if (slotData[i] == -1)
+			{
+				slotArray[i] = i > 5 ? ' ' : '_';
+			}
+			if (slotData[i] == 0)
+				slotArray[i] = 'X';
+			if (slotData[i] == 1)
+				slotArray[i] = 'O';
+		}
+
+		if (data.isLocal)
+		{
+			if (playerTurn == 0)
+				slotArray[slotIndex] = 'x';
+			else
+				slotArray[slotIndex] = 'o';
 		}
 		else
 		{
-			//I tried using space but that doens't work either
-			data.currentChatMessage.erase(data.currentMessageIndex - 1, 1);
-			data.currentMessageIndex--; //this is pretty important huh
+			//if it's our turn, overwrite at slot index with our specific character (also it has to be GREEN?)
+			if (playerTurn == data.clientID)
+			{
+				if (playerTurn == 0)
+					slotArray[slotIndex] = 'x';
+				else
+					slotArray[slotIndex] = 'o';
+			}
 		}
-		//we need to tell our display() to clear this frame and redraw
-		data.doesDisplay = 1;
+
+		//if it's networked, and not our turn, we don't care about slotIndex
+		//otherwise, we do take this into account
 	}
 
 	for (int i = 0; i < 256; i++) //might not call this if !doesDisplay, but that might be TOO meta (this is safer and it's just 256 ints so w/e
@@ -230,6 +336,14 @@ void GameLocalState::ClearScreen()
 	system("CLS");
 }
 
+void displayGameBoard(char cArray[9])
+{
+	using namespace std;
+	cout << "_" << cArray[0] << "_|_" << cArray[1] << "_|_" << cArray[2] << "_" << endl;
+	cout << "_" << cArray[3] << "_|_" << cArray[4] << "_|_" << cArray[5] << "_" << endl;
+	cout << " " << cArray[6] << " | " << cArray[7] << " | " << cArray[8] << " " << endl;
+}
+
 void GameLocalState::display()
 {
 	using namespace std;
@@ -247,11 +361,11 @@ void GameLocalState::display()
 	}
 	data.doesDisplay = 0;
 
-	ClearScreen(); //clear tj """""""""buffer""""""""" yoshi https://www.youtube.com/watch?v=kpk2tdsPh0A creedit to pannen for the meme
+	ClearScreen(); //clear screen
 
 	cout << data.headerMessage << endl << endl << endl;
 
-	for (int i = 9; i >= 0; i--)
+	/*for (int i = 9; i >= 0; i--)
 	{
 		if (data.recentMessages[i][0] == '@')
 		{
@@ -263,30 +377,48 @@ void GameLocalState::display()
 		}
 		cout << data.recentMessages[i] << endl;
 		gpGame->SetTextDefault();
-	}
+	}*/
 
 	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
-	cout << ">" << data.currentChatMessage << "<\b";
+	//cout << ">" << data.currentChatMessage << "<\b";
 
 	//verified with hard coding that server = 0 and client = 1
-	int displayUserIndex = 0;
-	if (mNetworkManager->mIsServer)
+	//int displayUserIndex = 0;
+	//if (mNetworkManager->mIsServer)
+	//{
+	//	printf("\n\nUser List:");
+	//	while (data.usernameList[displayUserIndex] != "")
+	//	{
+	//		if (displayUserIndex == 0) //mention we're the server!
+	//		{
+	//			printf("\n%s%: %s", /*(std::string)*/data.myUsername, "SERVER!");
+	//		}
+	//		else
+	//		{
+	//			printf("\n%s", data.usernameList[displayUserIndex]);
+	//		}
+	//		displayUserIndex++;
+	//	}
+	//}
+
+	displayGameBoard(slotArray);
+
+	string controlSchemeTemp = "";
+	if (playerTurn == 0 || !data.isLocal)
 	{
-		printf("\n\nUser List:");
-		while (data.usernameList[displayUserIndex] != "")
-		{
-			if (displayUserIndex == 0) //mention we're the server!
-			{
-				printf("\n%s%: %s", /*(std::string)*/data.myUsername, "SERVER!");
-			}
-			else
-			{
-				printf("\n%s", data.usernameList[displayUserIndex]);
-			}
-			displayUserIndex++;
-		}
+		controlSchemeTemp = "Use WASD to move cursor!";
 	}
-	
+	else if (playerTurn == 1)
+	{
+		controlSchemeTemp = "Use IJKL to move cursor!";
+	}
+
+	gpGame->SetTextPurple();
+	cout << endl << "Current Player: " << playerTurn << endl << controlSchemeTemp << endl;
+
+	gpGame->SetTextRed();
+	cout << endl << data.recentMessages[0] << endl << endl;
+	gpGame->SetTextDefault();
 	cout.flush();
 }
 
@@ -370,8 +502,12 @@ void GameLocalState::goToNextState(ApplicationState *passData)
 
 void GameLocalState::updateNetworking()
 {
+	if (data.isLocal)
+		return;
 	mNetworkManager->updateServer();
 }
+
+
 
 void GameLocalState::ReceiveMessage(char cUser[31], char cMessage[96], int cMsgType)
 {
@@ -394,3 +530,23 @@ void GameLocalState::ReceiveMessage(char cUser[31], char cMessage[96], int cMsgT
 	PushMessageIntoQueue(fullString);
 }
 
+bool GameLocalState::validateMove()
+{
+	return (slotData[slotIndex] == -1);
+}
+
+void GameLocalState::setMove()
+{
+	data.recentMessages[0] = "";
+	slotData[slotIndex] = playerTurn;
+	playerTurn = 1 - playerTurn;
+	slotIndex = 0;
+	data.doesDisplay = 1;
+}
+
+void GameLocalState::ReceiveSlotInput(int cSlot)
+{
+	//it's already validated on the other PEER's end and we are just taking their totally valid move and display it (updating our data)
+	slotIndex = cSlot;
+	setMove();
+}

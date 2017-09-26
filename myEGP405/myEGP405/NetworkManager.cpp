@@ -34,7 +34,7 @@ void NetworkManager::initializeNetwork()
 bool NetworkManager::initServer(int cPort)
 {
 	bool serverSuccess = false;
-	maxClients = 20;
+	maxClients = 1;
 	serverPort = cPort;
 	sd = new SocketDescriptor(serverPort, 0);
 	mpPeer->SetMaximumIncomingConnections(maxClients);
