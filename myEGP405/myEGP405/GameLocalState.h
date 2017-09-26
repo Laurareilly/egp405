@@ -84,17 +84,19 @@ public:
 	//as always, I learned a lot about C from this project even though I'm POSITIVE this is improper 
 
 private:
-	bool p1Up, p1Down, p1Left, p1Right, enterPressed, escPressed, p2Up, p2Down, p2Left, p2Right; //p2 will be IJKL or arrow keys probbly
+	bool p1Up, p1Down, p1Left, p1Right, enterPressed, escPressed, shiftHeld, p2Up, p2Down, p2Left, p2Right; //p2 will be IJKL or arrow keys probbly
 	void updateStateLocalGame();
 	void updateStateNetworkedGame();
 
 	bool validateMove();
 	void setMove();
+	void checkForWin(unsigned int playerNum);
 
 	int slotIndex = 0; //read from left to right, top to bottom 0 - 8
 	unsigned int playerTurn = 0; //0 is player 1 ofc. In a networked game, compare to clientID for validating input
 	char slotArray[9];
 	int slotData[9];
+	unsigned int moveCounter;
 };
 
 

@@ -10,7 +10,7 @@
 
 GameLocalState::GameLocalState()
 {
-	data.headerMessage = "Welcome to UDPalooza!";
+	data.headerMessage = "Welcome to Tic Tac Toe!";
 	for (int i = 0; i < 10; ++i) //our recent messages are blank (user hasnt input anything)
 	{
 		data.recentMessages[i] = '\n';
@@ -31,7 +31,7 @@ GameLocalState::GameLocalState()
 		slotArray[i] = ' ';
 		slotData[i] = -1;
 	}
-
+	moveCounter = 0;
 }
 
 void GameLocalState::updateInput()
@@ -132,9 +132,13 @@ void GameLocalState::updateStateLocalGame()
 	p2Left = (data.keyboardData[0x4A] && !data.prevKeyboardData[0x4A]); //J
 	p2Right = (data.keyboardData[0x4C] && !data.prevKeyboardData[0x4C]); //L
 
-	if (escPressed)
+	if (shiftHeld && escPressed)
 	{
-
+		gpGame->requestExit();
+	}
+	else if (escPressed)
+	{
+		//yeh
 	}
 
 	if (playerTurn == 0)
@@ -212,9 +216,13 @@ void GameLocalState::updateStateLocalGame()
 void GameLocalState::updateStateNetworkedGame()
 {
 	//Additional networking inputs go here (PRESS 1-9 FOR FUN COLORS?)
-	if (escPressed)
+	if (shiftHeld && escPressed)
 	{
-
+		gpGame->requestExit();
+	}
+	else if (escPressed)
+	{
+		//go to lobby/reset the game or somethin
 	}
 
 	if (playerTurn != data.clientID)
@@ -266,6 +274,7 @@ void GameLocalState::updateState()
 
 	enterPressed = (data.keyboardData[VK_RETURN] && !data.prevKeyboardData[VK_RETURN]); //Enter
 	escPressed = (data.keyboardData[VK_ESCAPE] && !data.prevKeyboardData[VK_ESCAPE]); //Escape
+	shiftHeld = data.keyboardData[VK_SHIFT]; //Shift
 
 	if (data.isLocal)
 	{
@@ -539,9 +548,43 @@ void GameLocalState::setMove()
 {
 	data.recentMessages[0] = "";
 	slotData[slotIndex] = playerTurn;
+	moveCounter++;
+	checkForWin(playerTurn);
 	playerTurn = 1 - playerTurn;
 	slotIndex = 0;
 	data.doesDisplay = 1;
+}
+
+void GameLocalState::checkForWin(unsigned int playerNum)
+{
+	data.doesDisplay = 1;
+	//ok here we go
+	if (slotData[0] == playerNum && slotData[1] == playerNum && slotData[2] == playerNum || //checking top row
+		slotData[3] == playerNum && slotData[4] == playerNum && slotData[5] == playerNum || //checking middle row
+		slotData[6] == playerNum && slotData[7] == playerNum && slotData[8] == playerNum || //checking bottom row
+		slotData[0] == playerNum && slotData[3] == playerNum && slotData[6] == playerNum || //checking first column
+		slotData[1] == playerNum && slotData[4] == playerNum && slotData[7] == playerNum || //checking second column
+		slotData[2] == playerNum && slotData[5] == playerNum && slotData[8] == playerNum || //checking third column
+		slotData[0] == playerNum && slotData[4] == playerNum && slotData[8] == playerNum || //checking diagonal
+		slotData[2] == playerNum && slotData[4] == playerNum && slotData[6] == playerNum ) //checking diagonal
+	{
+		if (playerNum == 0)
+		{
+			data.recentMessages[0] = "wow!! Player 1 wins";
+			return;
+			//need to ask players if they want to play again or quit
+			//if they do, switch their playernum or clientid if network?? and 
+		}
+		else
+		{
+			data.recentMessages[0] = "wow!! Player 2 wins";
+			return;
+		}
+	}
+	if (moveCounter >= 9)
+	{
+		data.recentMessages[0] = "It was a tie";
+	}
 }
 
 void GameLocalState::ReceiveSlotInput(int cSlot)
