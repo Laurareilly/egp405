@@ -15,7 +15,7 @@ Game *gpGame;
 
 char str[512];
 
-
+//string butt but butbbut but btue
 //UsernameMessage connectedUserList[10];
 int connectedUserCount = 10;
 
