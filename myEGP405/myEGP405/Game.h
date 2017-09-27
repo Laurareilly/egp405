@@ -37,6 +37,8 @@ public:
 
 	void SetTextRed();
 	void SetTextPurple();
+	void SetTextGreen();
+	void SetTextBlue();
 	void SetTextDefault();
 
 	//struct ApplicationState

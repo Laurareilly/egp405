@@ -93,6 +93,16 @@ void Game::SetTextDefault()
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mDefaultColors);
 }
 
+void Game::SetTextBlue()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE);
+}
+
+void Game::SetTextGreen()
+{
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_GREEN);
+}
+
 //void Game::updateNetworking(ApplicationState * state)
 //{
 //	mpNetworkManager->updateServer();

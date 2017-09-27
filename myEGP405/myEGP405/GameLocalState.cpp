@@ -345,12 +345,58 @@ void GameLocalState::ClearScreen()
 	system("CLS");
 }
 
+void ChangeColorBasedOnPassedChar(char cChar)
+{
+	if (cChar == 'X')
+		gpGame->SetTextRed();
+	if (cChar == 'O')
+		gpGame->SetTextBlue();
+	if (cChar == 'x' || cChar == 'o')
+		gpGame->SetTextGreen();
+}
+
 void displayGameBoard(char cArray[9])
 {
 	using namespace std;
-	cout << "_" << cArray[0] << "_|_" << cArray[1] << "_|_" << cArray[2] << "_" << endl;
-	cout << "_" << cArray[3] << "_|_" << cArray[4] << "_|_" << cArray[5] << "_" << endl;
-	cout << " " << cArray[6] << " | " << cArray[7] << " | " << cArray[8] << " " << endl;
+	cout << "_";
+	ChangeColorBasedOnPassedChar(cArray[0]);
+	cout << cArray[0];
+	gpGame->SetTextDefault();
+	cout << "_|_";
+	ChangeColorBasedOnPassedChar(cArray[1]);
+	cout << cArray[1];
+	gpGame->SetTextDefault();
+	cout << "_|_";
+	ChangeColorBasedOnPassedChar(cArray[2]);
+	cout << cArray[2];
+	gpGame->SetTextDefault();
+	cout << "_" << endl;
+	cout << "_";
+	ChangeColorBasedOnPassedChar(cArray[3]);
+	cout << cArray[3];
+	gpGame->SetTextDefault();
+	cout << "_|_";
+	ChangeColorBasedOnPassedChar(cArray[4]);
+	cout << cArray[4];
+	gpGame->SetTextDefault();
+	cout << "_|_";
+	ChangeColorBasedOnPassedChar(cArray[5]);
+	cout << cArray[5];
+	gpGame->SetTextDefault();
+	cout << "_" << endl;
+	cout << " ";
+	ChangeColorBasedOnPassedChar(cArray[6]);
+	cout << cArray[6];
+	gpGame->SetTextDefault();
+	cout << " | ";
+	ChangeColorBasedOnPassedChar(cArray[7]);
+	cout << cArray[7];
+	gpGame->SetTextDefault();
+	cout << " | ";
+	ChangeColorBasedOnPassedChar(cArray[8]);
+	cout << cArray[8];
+	gpGame->SetTextDefault();
+	cout << " " << endl;
 }
 
 void GameLocalState::display()
