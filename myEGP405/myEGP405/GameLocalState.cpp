@@ -32,6 +32,7 @@ GameLocalState::GameLocalState()
 		slotData[i] = -1;
 	}
 	moveCounter = 0;
+	gameOver = false;
 }
 
 void GameLocalState::updateInput()
@@ -139,78 +140,106 @@ void GameLocalState::updateStateLocalGame()
 	else if (escPressed)
 	{
 		//yeh
+		goToNextState(this);
+		resetGame();
 	}
 
-	if (playerTurn == 0)
+	if (!gameOver)
 	{
-		if (p1Up)
+		if (playerTurn == 0)
 		{
-			slotIndex -= 3;
-		}
-		else if (p1Down)
-		{
-			slotIndex += 3;
-		}
-		if (slotIndex < 0)
-			slotIndex += 9;
-		if (slotIndex > 8)
-			slotIndex -= 9;
-
-		if (p1Right)
-		{
-			slotIndex++;
-			if (slotIndex % 3 == 0)
+			if (p1Up)
+			{
 				slotIndex -= 3;
-		}
-		else if (p1Left)
-		{
-			slotIndex--;
-			if ((slotIndex + 4) % 3 == 0)
+			}
+			else if (p1Down)
+			{
 				slotIndex += 3;
-		}
-	}
-	else if (playerTurn == 1)
-	{
-		if (p2Up)
-		{
-			slotIndex -= 3;
-		}
-		else if (p2Down)
-		{
-			slotIndex += 3;
-		}
-		if (slotIndex < 0)
-			slotIndex += 9;
-		if (slotIndex > 8)
-			slotIndex -= 9;
+			}
+			if (slotIndex < 0)
+				slotIndex += 9;
+			if (slotIndex > 8)
+				slotIndex -= 9;
 
-		if (p2Right)
+			if (p1Right)
+			{
+				slotIndex++;
+				if (slotIndex % 3 == 0)
+					slotIndex -= 3;
+			}
+			else if (p1Left)
+			{
+				slotIndex--;
+				if ((slotIndex + 4) % 3 == 0)
+					slotIndex += 3;
+			}
+		}
+		else if (playerTurn == 1)
 		{
-			slotIndex++;
-			if (slotIndex % 3 == 0)
+			if (p2Up)
+			{
 				slotIndex -= 3;
-		}
-		else if (p2Left)
-		{
-			slotIndex--;
-			if ((slotIndex + 4) % 3 == 0)
+			}
+			else if (p2Down)
+			{
 				slotIndex += 3;
+			}
+			if (slotIndex < 0)
+				slotIndex += 9;
+			if (slotIndex > 8)
+				slotIndex -= 9;
+
+			if (p2Right)
+			{
+				slotIndex++;
+				if (slotIndex % 3 == 0)
+					slotIndex -= 3;
+			}
+			else if (p2Left)
+			{
+				slotIndex--;
+				if ((slotIndex + 4) % 3 == 0)
+					slotIndex += 3;
+			}
+		}
+
+		if (enterPressed)//make sure it isn't just held down!
+		{
+			if (validateMove())
+			{
+				setMove();
+			}
+			else
+			{
+				data.doesDisplay = 1;
+				data.recentMessages[0] = "Invalid Move! Please try a different slot!";
+			}
 		}
 	}
-
-
-	if (enterPressed)//make sure it isn't just held down!
+	else
 	{
-		if (validateMove())
+		//is game over
+		//maybe we might want to move this somewhere else, but its really only checking 3 nums at end game so
+
+		//1. Restart game
+		if (data.keyboardData[0x31] && !data.prevKeyboardData[0x31]) //make sure it isn't just held down!
 		{
-			setMove();
+			resetGame();
 		}
-		else
+
+		//2. Back to Lobby
+		if (data.keyboardData[0x32] && !data.prevKeyboardData[0x32]) //make sure it isn't just held down!
 		{
-			data.doesDisplay = 1;
-			data.recentMessages[0] = "Invalid Move! Please try a different slot!";
+			resetGame();
+			goToNextState(this);
+		}
+		//3. Exit
+		if (data.keyboardData[0x33] && !data.prevKeyboardData[0x33]) //make sure it isn't just held down!
+		{
+			gpGame->requestExit();
 		}
 	}
+	
 }
 
 void GameLocalState::updateStateNetworkedGame()
@@ -262,6 +291,34 @@ void GameLocalState::updateStateNetworkedGame()
 		//this is a function, not a character to be inserted into the string
 		processMessage();
 	}
+}
+
+//using it more as a "reset" game i guess
+void GameLocalState::resetGame()
+{
+	gameOver = false;
+	data.headerMessage = "Youre in-game!\nWASD for P1 | IJKL for P2\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
+	for (int i = 0; i < 10; ++i) //our recent messages are blank (user hasnt input anything)
+	{
+		data.recentMessages[i] = '\n';
+	}
+	for (int i = 0; i < 20; ++i)
+	{
+		data.usernameList[i] = "";
+	}
+	data.currentChatMessage = "";
+	int i = 0;
+	for (i = 0; i < 6; ++i)
+	{
+		slotArray[i] = '_';
+		slotData[i] = -1;
+	}
+	for (i = 6; i < 9; ++i)
+	{
+		slotArray[i] = ' ';
+		slotData[i] = -1;
+	}
+	moveCounter = 0;
 }
 
 void GameLocalState::updateState()
@@ -524,7 +581,20 @@ void GameLocalState::processMessage()
 {
 	if (data.currentMessageIndex > 0)
 	{
-		if (data.currentChatMessage == "#help")
+		if (data.currentChatMessage == "1")
+		{
+			//play again
+		}
+		if (data.currentChatMessage == "2")
+		{
+			//go back to lobby
+		}
+		if (data.currentChatMessage == "3")
+		{
+			//exit
+			gpGame->requestExit();
+		}
+		/*if (data.currentChatMessage == "#help")
 		{
 			PushMessageIntoQueue(HelpMessage());
 		}
@@ -543,7 +613,7 @@ void GameLocalState::processMessage()
 			}
 			mNetworkManager->SendNetworkedMessage(myMessage, data.clientID);
 			clearCurrentMessage();
-		}
+		}*/
 	}
 }
 
@@ -616,20 +686,22 @@ void GameLocalState::checkForWin(unsigned int playerNum)
 	{
 		if (playerNum == 0)
 		{
-			data.recentMessages[0] = "wow!! Player 1 wins";
+			gameOver = true;
+			PushMessageIntoQueue("Player 1 wins! Play again?\n1.Play Again\n2.Back to Lobby\n3.Quit Game");
 			return;
-			//need to ask players if they want to play again or quit
-			//if they do, switch their playernum or clientid if network?? and 
 		}
 		else
 		{
-			data.recentMessages[0] = "wow!! Player 2 wins";
+			gameOver = true;
+			PushMessageIntoQueue("Player 2 wins! Play again?\n1.Play Again\n2.Back to Lobby\n3.Quit Game");
 			return;
 		}
 	}
 	if (moveCounter >= 9)
 	{
-		data.recentMessages[0] = "It was a tie";
+		gameOver = true;
+		PushMessageIntoQueue("IT WAS A TIE! Play again?\n1.Play Again\n2.Back to Lobby\n3.Quit Game");
+		return;
 	}
 }
 

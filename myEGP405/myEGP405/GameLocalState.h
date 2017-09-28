@@ -87,6 +87,7 @@ private:
 	bool p1Up, p1Down, p1Left, p1Right, enterPressed, escPressed, shiftHeld, p2Up, p2Down, p2Left, p2Right; //p2 will be IJKL or arrow keys probbly
 	void updateStateLocalGame();
 	void updateStateNetworkedGame();
+	void resetGame();
 
 	bool validateMove();
 	void setMove();
@@ -97,6 +98,7 @@ private:
 	char slotArray[9];
 	int slotData[9];
 	unsigned int moveCounter;
+	bool gameOver;
 };
 
 
