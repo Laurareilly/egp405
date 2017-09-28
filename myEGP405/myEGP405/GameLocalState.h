@@ -36,7 +36,7 @@ public:
 
 	virtual int GetCurrentTurn() { return playerTurn; }
 
-	virtual void StartGameAtPlayerTurn(int cTurn) { waitingForPlayer = false; playerTurn = startPlayerTurn = cTurn; }
+	virtual void StartGameAtPlayerTurn(int cTurn);
 
 	virtual void ForcePlayerToLobby();
 
@@ -52,8 +52,13 @@ public:
 
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{
-		waitingForPlayer = true;
+		//Make sure the board is cleared and we are alternating who gets to go first
 		data.isLocal = passData->data.isLocal;
+		resetGame(!data.isLocal);
+		startPlayerTurn = 1 - playerTurn;
+		playerTurn = startPlayerTurn;
+
+		waitingForPlayer = true;
 		data.currentChatMessage = "";
 		data.currentMessageIndex = 0;
 		data.doesDisplay = 1;
@@ -64,12 +69,21 @@ public:
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
 		if (data.isLocal)
+		{
 			data.headerMessage = "Youre in-game!\nWASD for P1 | IJKL for P2\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
+			data.recentMessages[0] = "";
+			StartLocalGame();
+		}
 		else
+		{
 			data.headerMessage = "Youre in-game!\nWASD to choose slot on game board\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
+			data.recentMessages[0] = "Waiting for player!";
+		}
 		mNetworkManager = passData->mNetworkManager;
 		data.clientID = passData->data.clientID;
 		data.peerSystemAddress = passData->data.peerSystemAddress;
+
+		
 		if (mNetworkManager->mIsServer)
 		{
 			data.clientID = 0;
@@ -97,6 +111,9 @@ private:
 	void updateStateLocalGame();
 	void updateStateNetworkedGame();
 	void resetGame(bool isNetworked = false);
+	void SetSlotArrayText();
+
+	void StartLocalGame();
 
 	bool validateMove();
 	int setMove();

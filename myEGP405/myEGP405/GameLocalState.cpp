@@ -331,6 +331,7 @@ void GameLocalState::updateStateNetworkedGame()
 //using it more as a "reset" game i guess
 void GameLocalState::resetGame(bool isNetworked)
 {
+	//data.doesUpdateState = 0; //give it one frame before updating the state, so we don't accidentally input a move
 	gameOver = false;
 	data.headerMessage =
 		isNetworked ?
@@ -362,14 +363,26 @@ void GameLocalState::resetGame(bool isNetworked)
 	//playerTurn = 0;//<-not this
 	moveCounter = 0;
 	data.doesDisplay = 1;
-
+	slotIndex = 0;
 
 	if (isNetworked)
 	{
-		waitingForPlayer = true;
+		waitingForPlayer = true;		
 		//send packet to other user that we are waiting for them
 		//force us to wait until they either choose to play as well, OR disconnect
 	}
+	else
+	{
+		StartLocalGame();
+	}
+}
+
+void GameLocalState::StartLocalGame()
+{
+	if (playerTurn == 0)
+		slotArray[slotIndex] = 'x';
+	else
+		slotArray[slotIndex] = 'o';
 }
 
 void GameLocalState::updateState()
@@ -408,40 +421,14 @@ void GameLocalState::updateState()
 	{
 		data.doesDisplay = 1;
 
-		//update slotArray with correct strings
-		for (int i = 0; i < 9; i++)
+		if (!data.isLocal && waitingForPlayer)
 		{
-			if (slotData[i] == -1)
-			{
-				slotArray[i] = i > 5 ? ' ' : '_';
-			}
-			if (slotData[i] == 0)
-				slotArray[i] = 'X';
-			if (slotData[i] == 1)
-				slotArray[i] = 'O';
+			return;
 		}
 
-		if (data.isLocal)
-		{
-			if (playerTurn == 0)
-				slotArray[slotIndex] = 'x';
-			else
-				slotArray[slotIndex] = 'o';
-		}
-		else
-		{
-			//if it's our turn, overwrite at slot index with our specific character (also it has to be GREEN?)
-			if (playerTurn == data.clientID)
-			{
-				if (playerTurn == 0)
-					slotArray[slotIndex] = 'x';
-				else
-					slotArray[slotIndex] = 'o';
-			}
-		}
 
-		//if it's networked, and not our turn, we don't care about slotIndex
-		//otherwise, we do take this into account
+		SetSlotArrayText();
+
 	}
 
 	for (int i = 0; i < 256; i++) //might not call this if !doesDisplay, but that might be TOO meta (this is safer and it's just 256 ints so w/e
@@ -450,6 +437,43 @@ void GameLocalState::updateState()
 		data.prevKeyboardData[i] = data.keyboardData[i];
 	}
 
+}
+
+void GameLocalState::SetSlotArrayText()
+{
+	//update slotArray with correct strings
+	for (int i = 0; i < 9; i++)
+	{
+		if (slotData[i] == -1)
+		{
+			slotArray[i] = i > 5 ? ' ' : '_';
+		}
+		if (slotData[i] == 0)
+			slotArray[i] = 'X';
+		if (slotData[i] == 1)
+			slotArray[i] = 'O';
+	}
+
+	if (data.isLocal)
+	{
+		if (playerTurn == 0)
+			slotArray[slotIndex] = 'x';
+		else
+			slotArray[slotIndex] = 'o';
+	}
+	else
+	{
+		//if it's our turn, overwrite at slot index with our specific character (also it has to be GREEN?)
+		if (playerTurn == data.clientID)
+		{
+			if (playerTurn == 0)
+				slotArray[slotIndex] = 'x';
+			else
+				slotArray[slotIndex] = 'o';
+		}
+	}
+		//if it's networked, and not our turn, we don't care about slotIndex
+		//otherwise, we do take this into account
 }
 
 std::string HelpMessage()
@@ -558,7 +582,7 @@ void GameLocalState::display()
 	std::cout << endl << data.recentMessages[0] << endl << endl;
 	gpGame->SetTextDefault();
 
-	printf("\n%u\n", data.clientID);
+//	printf("\n%u\n", data.clientID);
 	std::cout.flush();
 }
 
@@ -572,6 +596,35 @@ int GameLocalState::getNextOpenUsernameIndex()
 	return -1;
 }
 
+//This will be sent from the Host of the TicTacToe Party to the Party Guest
+//It syncs up the turn order based on the host's previous experiences in TicTacToe
+//It also tells the guest that they are in a viable game and, if it's their turn, can immediately move;
+void GameLocalState::StartGameAtPlayerTurn(int cTurn)
+{ 
+	waitingForPlayer = false; 
+	playerTurn = startPlayerTurn = cTurn; 
+	data.doesDisplay = 1;
+
+	//if (data.isLocal)
+	//{
+	//	if (playerTurn == 0)
+	//		slotArray[slotIndex] = 'x';
+	//	else
+	//		slotArray[slotIndex] = 'o';
+	//}
+	//else
+	//{
+	//	//if it's our turn, overwrite at slot index with our specific character (also it has to be GREEN?)
+		if (playerTurn == data.clientID)
+		{
+			if (playerTurn == 0)
+				slotArray[slotIndex] = 'x';
+			else
+				slotArray[slotIndex] = 'o';
+		}
+	//}
+}
+
 void GameLocalState::insertUsernameIntoList(char cName[31], int cIndex)
 {	
 	strcpy(newUsername[cIndex], cName);
@@ -580,7 +633,7 @@ void GameLocalState::insertUsernameIntoList(char cName[31], int cIndex)
 	data.doesDisplay = 1;
 }
 
-//proof of concept, move the message up with "User: " at the beginning, then allow users to type a new one
+//chatroom
 void GameLocalState::PushMessageIntoQueue()
 {
 	for (int i = 9; i > 0; i--)
@@ -593,6 +646,7 @@ void GameLocalState::PushMessageIntoQueue()
 	data.doesDisplay = 1;
 }
 
+//sometimes used for the bottom red text
 void GameLocalState::PushMessageIntoQueue(std::string newMessage)
 {
 	for (int i = 9; i > 0; i--)
@@ -605,6 +659,7 @@ void GameLocalState::PushMessageIntoQueue(std::string newMessage)
 	data.doesDisplay = 1;
 }
 
+//obsolete, chat room
 void GameLocalState::processMessage()
 {
 	if (data.currentMessageIndex > 0)
@@ -624,26 +679,6 @@ void GameLocalState::processMessage()
 			mNetworkManager->DisconnectFromPeers(); mNetworkManager->ShutdownServer();
 			gpGame->requestExit();
 		}
-		/*if (data.currentChatMessage == "#help")
-		{
-			PushMessageIntoQueue(HelpMessage());
-		}
-		if (data.currentChatMessage == "#quit")
-		{
-			gpGame->requestExit();
-			mNetworkManager->SendNetworkedMessage(" has disconnected. ", data.clientID);
-		}
-		else
-		{
-			char* myMessage = new char[data.currentChatMessage.length() + 1];
-			strcpy(myMessage, data.currentChatMessage.c_str());
-			if (mNetworkManager->mIsServer)
-			{
-				ReceiveMessage(data.myUsername, myMessage);
-			}
-			mNetworkManager->SendNetworkedMessage(myMessage, data.clientID);
-			clearCurrentMessage();
-		}*/
 	}
 }
 
@@ -707,6 +742,7 @@ int GameLocalState::setMove()
 	checkForWin(playerTurn);
 	playerTurn = 1 - playerTurn;
 	slotIndex = 0;
+	SetSlotArrayText();
 	data.doesDisplay = 1;
 	return tempSlot;
 }
