@@ -1,5 +1,5 @@
 /*
-Project 1
+Lab 2
 EGP 405-02
 Laura Reilly -- 0972157
 Robert Mitchell -- 0935286

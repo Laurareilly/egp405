@@ -35,13 +35,19 @@ public:
 	virtual void AcceptedToServer() = 0;
 	virtual void SetClientID(int cID) = 0;
 
+	virtual void ForcePlayerToLobby() = 0;
+
 	virtual void ReceiveSlotInput(int cSlot) = 0;
+	virtual void StartGameAtPlayerTurn(int cTurn) = 0;
+
+	virtual int GetCurrentTurn() = 0;
 
 	//0 = general message, 1 = PM, 2 = console message(red)
 	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) = 0;
 
 	virtual void SetPeerAddress(SystemAddress cAddress) = 0;
 	virtual SystemAddress GetPeerAddress() = 0;
+	virtual void PlayerJoined() = 0;
 
 	virtual int getNextOpenUsernameIndex() = 0;
 	virtual void insertUsernameIntoList(char* cName, int cIndex) = 0;
@@ -57,6 +63,7 @@ public:
 	~ApplicationState() { delete mNetworkManager; mNetworkManager = NULL; }
 
 	SystemAddress allSystemAddresses[20]; //why isnt this working
+
 protected:
 	ApplicationState *next, *previous;
 

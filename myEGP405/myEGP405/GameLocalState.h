@@ -31,7 +31,14 @@ public:
 	virtual int getNextOpenUsernameIndex();
 	virtual void insertUsernameIntoList(char cName[31], int cIndex);
 	virtual void SetPeerAddress(SystemAddress cAddress) { data.peerSystemAddress = cAddress; }
+	virtual void PlayerJoined() { waitingForPlayer = false; }
 	virtual SystemAddress GetPeerAddress() { return data.peerSystemAddress; }
+
+	virtual int GetCurrentTurn() { return playerTurn; }
+
+	virtual void StartGameAtPlayerTurn(int cTurn) { waitingForPlayer = false; playerTurn = startPlayerTurn = cTurn; }
+
+	virtual void ForcePlayerToLobby();
 
 	virtual int getIsLocal() { return data.isLocal; }
 
@@ -45,6 +52,7 @@ public:
 
 	virtual void onArriveFromPrevious(ApplicationState *passData) 
 	{
+		waitingForPlayer = true;
 		data.isLocal = passData->data.isLocal;
 		data.currentChatMessage = "";
 		data.currentMessageIndex = 0;
@@ -88,11 +96,13 @@ private:
 	bool p1Up, p1Down, p1Left, p1Right, enterPressed, escPressed, shiftHeld, p2Up, p2Down, p2Left, p2Right; //p2 will be IJKL or arrow keys probbly
 	void updateStateLocalGame();
 	void updateStateNetworkedGame();
-	void resetGame();
+	void resetGame(bool isNetworked = false);
 
 	bool validateMove();
 	int setMove();
 	void checkForWin(unsigned int playerNum);
+
+	bool waitingForPlayer = true;
 
 	int slotIndex = 0; //read from left to right, top to bottom 0 - 8
 	unsigned int playerTurn = 0; //0 is player 1 ofc. In a networked game, compare to clientID for validating input

@@ -38,6 +38,9 @@ bool NetworkManager::initServer(int cPort)
 	serverPort = cPort;
 	sd = new SocketDescriptor(serverPort, 0);
 	mpPeer->SetMaximumIncomingConnections(maxClients);
+	mpPeer->SetTimeoutTime(1000, RakNet::UNASSIGNED_SYSTEM_ADDRESS);
+	mpPeer->SetOccasionalPing(true);
+	mpPeer->SetUnreliableTimeout(1000);
 	serverSuccess =	mpPeer->Startup(maxClients, sd, 1);
 	mIsServer = true;
 
@@ -49,6 +52,7 @@ void NetworkManager::initClient(int cPort, char* cIP)
 	mIsServer = false;
 	sd = new SocketDescriptor();
 	mpPeer->Startup(1, sd, 1);
+	mpPeer->SetOccasionalPing(true);
 
 	if (!mpPeer)
 	{
@@ -70,10 +74,13 @@ void NetworkManager::updateServer()
 		{
 		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
 			//printf("Another client has disconnected.\n");
+			gpGame->theState->ForcePlayerToLobby();
+			mpPeer->CloseConnection(mpPacket->systemAddress, true);
 			break;
 		case ID_REMOTE_CONNECTION_LOST:
 			//printf("Another client has lost the connection.\n");
-
+			gpGame->theState->ForcePlayerToLobby();
+			mpPeer->CloseConnection(mpPacket->systemAddress, true);
 			//what I would like to do here is send a message to all users
 			//they would receive it and send back a message with their clientID (in the background, they don't know about this)
 			//I'd check this against the list of clientIDs, find the one that is missing, and
@@ -83,6 +90,9 @@ void NetworkManager::updateServer()
 			break;
 		case ID_REMOTE_NEW_INCOMING_CONNECTION:
 			//printf("Another client has connected.\n");
+			break;
+		case ID_NEW_INCOMING_CONNECTION:
+			//printf("A client has connected.\n");
 			break;
 
 			case ID_NEW_CLIENT_JOIN:
@@ -103,6 +113,7 @@ void NetworkManager::updateServer()
 
 					//Keep a reference to the Peer's address
 					gpGame->theState->SetPeerAddress(mpPacket->systemAddress);
+					//gpGame->theState->PlayerJoined();
 					strcpy(username[0].username, gpGame->theState->getUsername());
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 
@@ -117,6 +128,7 @@ void NetworkManager::updateServer()
 					username->messageID = ID_NEW_CLIENT_JOIN;
 					mpPeer->Send((char*)username, sizeof(*username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, true); //true because 
 					gpGame->theState->ReceiveMessage(username->username, " has joined!");
+					gpGame->theState->PlayerJoined();
 
 					int clientIDNum = gpGame->theState->getNextOpenUsernameIndex();
 					char newUsername[31];
@@ -132,12 +144,25 @@ void NetworkManager::updateServer()
 					ClientNumberMessage clientNumber[1] = {ID_CLIENT_NUMBER, clientIDNum};
 					//send
 					mpPeer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false); //wait so should this be true or false
+
+					ClientNumberMessage turnNumber[1] = { ID_RECEIVE_TURN_NUMBER, clientIDNum };
+
+					turnNumber[0].clientNumber = gpGame->theState->GetCurrentTurn();
+					//send
+					mpPeer->Send((char*)turnNumber, sizeof(turnNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false); //wait so should this be true or false
 				}
 					break;
+				case ID_RECEIVE_TURN_NUMBER:
+				{
+					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
+					gpGame->theState->StartGameAtPlayerTurn(clientNumber->clientNumber);
+				}
+				break;
 				case ID_CLIENT_NUMBER:
 				{
 					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
 					gpGame->theState->SetClientID(clientNumber->clientNumber);
+					//gpGame->theState->PlayerJoined();
 					//gpGame->theState->SetClientID(2);
 					//verified that we are setting SetClientID to 1!
 					//if (clientNumber->clientNumber == 1)
@@ -223,12 +248,27 @@ void NetworkManager::updateServer()
 				case ID_DISCONNECTION_NOTIFICATION:
 					//let everyone know someone left
 					printf("someone has left bye :(");
+					gpGame->theState->ForcePlayerToLobby();
+					mpPeer->CloseConnection(mpPacket->systemAddress, true);
 					//gpGame->theState->ReceiveMessage(username->username, " has LEFT");
 					break;
 				case ID_SEND_MOVE: //this is technically RECEIVING a move
 				{
 					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
 					gpGame->theState->ReceiveSlotInput(clientNumber->clientNumber);
+				}
+				break;
+				case ID_CONNECTION_LOST:
+				{
+					//we believe this is the only one being called when the application gets closed
+					gpGame->theState->ForcePlayerToLobby();
+				}
+				break;
+				case ID_PEER_LEAVE:
+				{
+					gpGame->theState->ForcePlayerToLobby();
+					mpPeer->CloseConnection(mpPacket->systemAddress, true);
+					//mpPeer->Shutdown(0); //shut down the server after 1/2 a second to make sure our message gets to the client, this could also do a handshake thingy instrea
 				}
 				break;
 			default:
@@ -241,6 +281,18 @@ void NetworkManager::updateServer()
 			}
 
 	}
+}
+
+void NetworkManager::ShutdownServer()
+{
+	mpPeer->Shutdown(500);
+}
+
+void NetworkManager::DisconnectFromPeers()
+{
+	ClientNumberMessage clientNumber[1] = { ID_PEER_LEAVE, 0 };
+	//send
+	mpPeer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->GetPeerAddress(), false); 
 }
 
 void NetworkManager::SendNetworkedMessage(char* cMessage, int cSenderID)

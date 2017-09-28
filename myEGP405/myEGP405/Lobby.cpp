@@ -504,7 +504,7 @@ void Lobby::processMessage()
 
 void Lobby::goToNextState(ApplicationState *passData)
 {
-	//dan this is good use of polymorphism i think -robby
+	//dan this is really good use of polymorphism i think -robby
 	gpGame->theState = gpGame->theGame;
 	next = gpGame->theState;
 	next->onArriveFromPrevious(passData);

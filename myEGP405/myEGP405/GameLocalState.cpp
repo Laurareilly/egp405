@@ -128,10 +128,7 @@ void GameLocalState::clearCurrentMessage()
 void GameLocalState::updateStateLocalGame()
 {
 	//Local game specific input booleans
-	p2Up = (data.keyboardData[0x49] && !data.prevKeyboardData[0x49]); //I
-	p2Down = (data.keyboardData[0x4B] && !data.prevKeyboardData[0x4B]); //K
-	p2Left = (data.keyboardData[0x4A] && !data.prevKeyboardData[0x4A]); //J
-	p2Right = (data.keyboardData[0x4C] && !data.prevKeyboardData[0x4C]); //L
+
 
 	if (shiftHeld && escPressed)
 	{
@@ -245,67 +242,101 @@ void GameLocalState::updateStateLocalGame()
 void GameLocalState::updateStateNetworkedGame()
 {
 	//Additional networking inputs go here (PRESS 1-9 FOR FUN COLORS?)
+
 	if (shiftHeld && escPressed)
 	{
+		mNetworkManager->DisconnectFromPeers(); 
+		mNetworkManager->ShutdownServer();
 		gpGame->requestExit();
 	}
 	else if (escPressed)
 	{
-		goToNextState(this);
+		mNetworkManager->DisconnectFromPeers(); 
+		mNetworkManager->ShutdownServer();
 		resetGame();
+		goToNextState(this);
 	}
 
-	if (playerTurn != data.clientID)
+	if ((playerTurn != data.clientID || waitingForPlayer) && !gameOver)
 	{
 		return;
 	}
 
-	if (p1Up)
+	if (!gameOver)
 	{
-		slotIndex -= 3;
-	}
-	else if (p1Down)
-	{
-		slotIndex += 3;
-	}
-	if (slotIndex < 0)
-		slotIndex += 9;
-	if (slotIndex > 8)
-		slotIndex -= 9;
-
-	if (p1Right)
-	{
-		slotIndex++;
-		if (slotIndex % 3 == 0)
+		if (p1Up)
+		{
 			slotIndex -= 3;
-	}
-	else if (p1Left)
-	{
-		slotIndex--;
-		if ((slotIndex + 4) % 3 == 0)
-			slotIndex += 3;
-	}
-
-
-	if (enterPressed)//make sure it isn't just held down!
-	{
-		if (validateMove())
-		{
-			SendMoveToOpponent(setMove());			
 		}
-		else
+		else if (p1Down)
 		{
-			data.doesDisplay = 1;
-			data.recentMessages[0] = "Invalid Move! Please try a different slot!";
+			slotIndex += 3;
+		}
+		if (slotIndex < 0)
+			slotIndex += 9;
+		if (slotIndex > 8)
+			slotIndex -= 9;
+
+		if (p1Right)
+		{
+			slotIndex++;
+			if (slotIndex % 3 == 0)
+				slotIndex -= 3;
+		}
+		else if (p1Left)
+		{
+			slotIndex--;
+			if ((slotIndex + 4) % 3 == 0)
+				slotIndex += 3;
+		}
+
+
+		if (enterPressed)//make sure it isn't just held down!
+		{
+			if (validateMove())
+			{
+				SendMoveToOpponent(setMove());
+			}
+			else
+			{
+				data.doesDisplay = 1;
+				data.recentMessages[0] = "Invalid Move! Please try a different slot!";
+			}
+		}
+	}
+	else
+	{
+		//1. Restart game
+		if (data.keyboardData[0x31] && !data.prevKeyboardData[0x31]) //make sure it isn't just held down!
+		{
+			resetGame();
+		}
+
+		//2. Back to Lobby
+		if (data.keyboardData[0x32] && !data.prevKeyboardData[0x32]) //make sure it isn't just held down!
+		{
+			mNetworkManager->DisconnectFromPeers(); mNetworkManager->ShutdownServer();
+			resetGame();
+			goToNextState(this);
+		}
+		//3. Exit
+		if (data.keyboardData[0x33] && !data.prevKeyboardData[0x33]) //make sure it isn't just held down!
+		{
+			mNetworkManager->DisconnectFromPeers(); mNetworkManager->ShutdownServer();
+			gpGame->requestExit();
 		}
 	}
 }
 
 //using it more as a "reset" game i guess
-void GameLocalState::resetGame()
+void GameLocalState::resetGame(bool isNetworked)
 {
 	gameOver = false;
-	data.headerMessage = "Youre in-game!\nWASD for P1 | IJKL for P2\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
+	data.headerMessage =
+		isNetworked ?
+		"Youre in-game!\nWASD to choose slot on game board\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application" :
+		"Youre in-game!\nWASD for P1 | IJKL for P2\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
+
 	for (int i = 0; i < 10; ++i) //our recent messages are blank (user hasnt input anything)
 	{
 		data.recentMessages[i] = '\n';
@@ -331,6 +362,14 @@ void GameLocalState::resetGame()
 	//playerTurn = 0;//<-not this
 	moveCounter = 0;
 	data.doesDisplay = 1;
+
+
+	if (isNetworked)
+	{
+		waitingForPlayer = true;
+		//send packet to other user that we are waiting for them
+		//force us to wait until they either choose to play as well, OR disconnect
+	}
 }
 
 void GameLocalState::updateState()
@@ -346,6 +385,11 @@ void GameLocalState::updateState()
 	p1Down = (data.keyboardData[0x53] && !data.prevKeyboardData[0x53]); //S
 	p1Left = (data.keyboardData[0x41] && !data.prevKeyboardData[0x41]); //A
 	p1Right = (data.keyboardData[0x44] && !data.prevKeyboardData[0x44]); //D
+
+	p2Up = (data.keyboardData[0x49] && !data.prevKeyboardData[0x49]); //I
+	p2Down = (data.keyboardData[0x4B] && !data.prevKeyboardData[0x4B]); //K
+	p2Left = (data.keyboardData[0x4A] && !data.prevKeyboardData[0x4A]); //J
+	p2Right = (data.keyboardData[0x4C] && !data.prevKeyboardData[0x4C]); //L
 
 	enterPressed = (data.keyboardData[VK_RETURN] && !data.prevKeyboardData[VK_RETURN]); //Enter
 	escPressed = (data.keyboardData[VK_ESCAPE] && !data.prevKeyboardData[VK_ESCAPE]); //Escape
@@ -493,7 +537,7 @@ void GameLocalState::display()
 
 	ClearScreen(); //clear screen
 
-	cout << data.headerMessage << endl << endl << endl;
+	std::cout << data.headerMessage << endl << endl << endl;
 
 	displayGameBoard(slotArray);
 
@@ -508,12 +552,14 @@ void GameLocalState::display()
 	}
 
 	gpGame->SetTextPurple();
-	cout << endl << "Current Player: " << playerTurn << endl << controlSchemeTemp << endl;
+	std::cout << endl << "Current Player: " << playerTurn << endl << controlSchemeTemp << endl;
 
 	gpGame->SetTextRed();
-	cout << endl << data.recentMessages[0] << endl << endl;
+	std::cout << endl << data.recentMessages[0] << endl << endl;
 	gpGame->SetTextDefault();
-	cout.flush();
+
+	printf("\n%u\n", data.clientID);
+	std::cout.flush();
 }
 
 int GameLocalState::getNextOpenUsernameIndex()
@@ -570,10 +616,12 @@ void GameLocalState::processMessage()
 		if (data.currentChatMessage == "2")
 		{
 			//go back to lobby
+			mNetworkManager->DisconnectFromPeers(); mNetworkManager->ShutdownServer();
 		}
 		if (data.currentChatMessage == "3")
 		{
 			//exit
+			mNetworkManager->DisconnectFromPeers(); mNetworkManager->ShutdownServer();
 			gpGame->requestExit();
 		}
 		/*if (data.currentChatMessage == "#help")
@@ -599,6 +647,13 @@ void GameLocalState::processMessage()
 	}
 }
 
+void GameLocalState::ForcePlayerToLobby()
+{
+	resetGame();
+	PushMessageIntoQueue("Disconnected from fellow tic tac toe master...");
+
+	goToNextState(this);
+}
 
 void GameLocalState::goToNextState(ApplicationState *passData)
 {
@@ -645,7 +700,8 @@ bool GameLocalState::validateMove()
 int GameLocalState::setMove()
 {
 	int tempSlot = slotIndex;
-	data.recentMessages[0] = "";
+	std::string tmpString = playerTurn == 0 ? "X" : "O";
+	data.recentMessages[0] = "Player placed " + tmpString + " at slot " + std::to_string(slotIndex + 1);
 	slotData[slotIndex] = playerTurn;
 	moveCounter++;
 	checkForWin(playerTurn);

@@ -38,12 +38,17 @@ public:
 	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) {};
 
 	virtual int getIsLocal() { return data.isLocal; }
+	virtual void PlayerJoined() {};
 
 	virtual void ReceiveSlotInput(int cSlot) {};
 
 	virtual void insertUsernameIntoList(char* cName, int cIndex) {};
 	virtual int getNextOpenUsernameIndex() { return -1; };
 	bool isServer;
+
+	virtual void ForcePlayerToLobby() {};
+	virtual void StartGameAtPlayerTurn(int cTurn) {};
+	virtual int GetCurrentTurn() { return 0; }
 
 
 	virtual void onArriveFromPrevious(ApplicationState *passData)
@@ -58,10 +63,17 @@ public:
 		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
-		data.headerMessage = "Welcome to UDPalooza!";
+		//data.headerMessage = "Welcome to UDPalooza!";
 		mNetworkManager = passData->mNetworkManager;
-		data.clientID = passData->data.clientID;
+		data.clientID = 1;
 		data.peerSystemAddress = passData->data.peerSystemAddress;
+		mCurrentOption = FIRST_SCREEN;
+		lobbyOptionText = "Type a number to choose one of the options below:\n(1) Play Local Game\n(2) Play Online\n(3) Quit Application";
+		data.recentMessages[0] = passData->data.recentMessages[0];
+		for (int i = 0; i < 20; ++i)
+		{
+			data.usernameList[i] = "";
+		}
 	}
 
 	virtual void goToNextState(ApplicationState *passData);

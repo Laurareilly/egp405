@@ -31,9 +31,11 @@ public:
 	bool initServer(int cPort);
 	void initClient(int cPort, char* cIP);
 	void updateServer();
+	void ShutdownServer();
 
 	void SendNetworkedMessage(char* cMessage, int cSenderID);
 	void SendNetworkedMove(int cMoveSlot);
+	void DisconnectFromPeers();
 
 	//void updateClient();
 
@@ -62,9 +64,10 @@ public:
 		ID_RECEIVE_MESSAGE,			//Server received ID_CtS, and determined that the message isn't a DM. This is then sent by server, and interpreted by clients
 		ID_RECEIVE_DIRECT_MESSAGE,	//Server received ID_CtS, and determined it was a DM. This is sent back to the sender, and is sent to the recipient of the DM (PURPLE)
 		ID_SERVER_MESSAGE,			//Sent by Server, received by Clients, displayed in all red
-		ID_CLIENT_LEAVE,
+		ID_PEER_LEAVE,				//Sent by EITHER ***PEER*** when they go to the lobby or press SHIFT ESC
 
 		ID_SEND_MOVE, //send by either peer, contains int that corresponds to slot in table
+		ID_RECEIVE_TURN_NUMBER,
 	};
 
 	enum RoomState
