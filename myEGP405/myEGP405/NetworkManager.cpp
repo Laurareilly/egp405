@@ -66,10 +66,6 @@ void NetworkManager::updateServer()
 {
 	for (mpPacket = mpPeer->Receive(); mpPacket; mpPeer->DeallocatePacket(mpPacket), mpPacket = mpPeer->Receive())
 	{
-		if ((int)(mpPacket->data[0] > 144)) //For some reason client -> connect's packet hits accept, then hits enum 221, then throws an exception
-		{
-			break;
-		}
 		switch (mpPacket->data[0])
 		{
 		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
@@ -103,10 +99,10 @@ void NetworkManager::updateServer()
 					printf("Our connection request has been accepted.\n");
 					gpGame->theState->AcceptedToServer();
 
-
 					UsernameMessage username[1] = { ID_USERNAME,  "", "hello" };
 
-					gpGame->theState->SetSystemAddress(mpPacket->systemAddress);
+					//Keep a reference to the Peer's address
+					gpGame->theState->SetPeerAddress(mpPacket->systemAddress);
 					strcpy(username[0].username, gpGame->theState->getUsername());
 					mpPeer->Send((char*)username, sizeof(username), HIGH_PRIORITY, RELIABLE_ORDERED, 0, mpPacket->systemAddress, false);
 
@@ -126,7 +122,9 @@ void NetworkManager::updateServer()
 					char newUsername[31];
 					strncpy(newUsername, username->username, 31);
 
-					gpGame->theState->allSystemAddresses[clientIDNum] = mpPacket->systemAddress;
+					//Keep a reference to the Peer's address
+					gpGame->theState->SetPeerAddress(mpPacket->systemAddress);
+					//gpGame->theState->allSystemAddresses[clientIDNum] = mpPacket->systemAddress;
 
 					gpGame->theState->insertUsernameIntoList(username->username, clientIDNum);
 
@@ -226,7 +224,13 @@ void NetworkManager::updateServer()
 					//let everyone know someone left
 					printf("someone has left bye :(");
 					//gpGame->theState->ReceiveMessage(username->username, " has LEFT");
-					break;		
+					break;
+				case ID_SEND_MOVE: //this is technically RECEIVING a move
+				{
+					ClientNumberMessage *clientNumber = (ClientNumberMessage*)mpPacket->data;
+					gpGame->theState->ReceiveSlotInput(clientNumber->clientNumber);
+				}
+				break;
 			default:
 			{
 				printf("Default Constructor Hit\n");
@@ -254,8 +258,16 @@ void NetworkManager::SendNetworkedMessage(char* cMessage, int cSenderID)
 		//ID_CLIENT_TO_SERVER
 		ClientToServerMessage newMessage[1] = { ID_CLIENT_TO_SERVER,  cSenderID, "hello" };
 		strcpy(newMessage[0].message, cMessage);
-		mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->GetSystemAddress(), false);
+		mpPeer->Send((char*)newMessage, sizeof(newMessage), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->GetPeerAddress(), false);
 	}
+}
+
+void NetworkManager::SendNetworkedMove(int cMoveSlot)
+{
+	//send our peer the move
+	ClientNumberMessage clientNumber[1] = { ID_SEND_MOVE, cMoveSlot };
+	//send
+	mpPeer->Send((char*)clientNumber, sizeof(clientNumber), HIGH_PRIORITY, RELIABLE_ORDERED, 0, gpGame->theState->GetPeerAddress(), false); //wait so should this be true or false
 }
 
 //

@@ -120,6 +120,12 @@ void Lobby::updateState()
 {
 	//Not using mouse inputs for this app, but there are lots of things to check still
 
+	if (data.doesUpdateState == 0)
+	{
+		data.doesUpdateState = 1;
+		return;
+	}
+
 	if (data.enterServer)
 	{
 		data.enterServer = false;
@@ -423,6 +429,7 @@ void Lobby::processMessage()
 					PushMessageIntoQueue("You have opted to Join an Existing Server!");
 					mCurrentOption = JOINING_SERVER_IP;
 					wantsToBeServer = false;
+					data.isLocal = false;
 				}
 				break;
 				case 51: //option 3 say goodbye and exit
@@ -460,6 +467,7 @@ void Lobby::processMessage()
 					lobbyOptionText = "Establishing Connection: Please Wait";
 
 					mNetworkManager->initClient(data.portNumber, data.ipAddress);
+					data.isLocal = false;
 
 					//mNetworkManager->updateServer();
 

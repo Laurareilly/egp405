@@ -3,7 +3,7 @@
 Project 1
 EGP 405-02
 Laura Reilly -- 0972157
-Robert Mitchell -- oh no
+Robert Mitchell -- 0935286
 
 We certify that this work is entirely our own.
 The assessor of this project may reproduce this 
@@ -35,11 +35,13 @@ public:
 	virtual void AcceptedToServer() = 0;
 	virtual void SetClientID(int cID) = 0;
 
+	virtual void ReceiveSlotInput(int cSlot) = 0;
+
 	//0 = general message, 1 = PM, 2 = console message(red)
 	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) = 0;
 
-	virtual void SetSystemAddress(SystemAddress cAddress) = 0;
-	virtual SystemAddress GetSystemAddress() = 0;
+	virtual void SetPeerAddress(SystemAddress cAddress) = 0;
+	virtual SystemAddress GetPeerAddress() = 0;
 
 	virtual int getNextOpenUsernameIndex() = 0;
 	virtual void insertUsernameIntoList(char* cName, int cIndex) = 0;
@@ -60,7 +62,7 @@ protected:
 
 	struct ApplicationStateData
 	{
-		SystemAddress serverSystemAddress;
+		SystemAddress peerSystemAddress; //this is the system address of our peer, we send data to them exclusively, this is overwritten when new opponent
 		unsigned int isLocal = 1; // 0 means networked
 		unsigned int clientID = 1;
 		char* usernameList[20]; //max clients is TWENTY

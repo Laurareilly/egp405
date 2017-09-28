@@ -251,7 +251,8 @@ void GameLocalState::updateStateNetworkedGame()
 	}
 	else if (escPressed)
 	{
-		//go to lobby/reset the game or somethin
+		goToNextState(this);
+		resetGame();
 	}
 
 	if (playerTurn != data.clientID)
@@ -288,8 +289,15 @@ void GameLocalState::updateStateNetworkedGame()
 
 	if (enterPressed)//make sure it isn't just held down!
 	{
-		//this is a function, not a character to be inserted into the string
-		processMessage();
+		if (validateMove())
+		{
+			SendMoveToOpponent(setMove());			
+		}
+		else
+		{
+			data.doesDisplay = 1;
+			data.recentMessages[0] = "Invalid Move! Please try a different slot!";
+		}
 	}
 }
 
@@ -318,12 +326,22 @@ void GameLocalState::resetGame()
 		slotArray[i] = ' ';
 		slotData[i] = -1;
 	}
+	playerTurn = 1 - startPlayerTurn;
+	startPlayerTurn = playerTurn;
+	//playerTurn = 0;//<-not this
 	moveCounter = 0;
+	data.doesDisplay = 1;
 }
 
 void GameLocalState::updateState()
 {
 	//All input checks required for both local and networked games
+	if (data.doesUpdateState == 0)
+	{
+		data.doesUpdateState = 1;
+		return;
+	}
+
 	p1Up = (data.keyboardData[0x57] && !data.prevKeyboardData[0x57]); //W
 	p1Down = (data.keyboardData[0x53] && !data.prevKeyboardData[0x53]); //S
 	p1Left = (data.keyboardData[0x41] && !data.prevKeyboardData[0x41]); //A
@@ -477,42 +495,6 @@ void GameLocalState::display()
 
 	cout << data.headerMessage << endl << endl << endl;
 
-	/*for (int i = 9; i >= 0; i--)
-	{
-		if (data.recentMessages[i][0] == '@')
-		{
-			gpGame->SetTextPurple();
-		}
-		if (data.recentMessages[i][0] == '*')
-		{
-			gpGame->SetTextRed();
-		}
-		cout << data.recentMessages[i] << endl;
-		gpGame->SetTextDefault();
-	}*/
-
-	//i put a '>' there cause it's like, CHAT HERE!!! haha it's good practice ok im very tired and hands r cold
-	//cout << ">" << data.currentChatMessage << "<\b";
-
-	//verified with hard coding that server = 0 and client = 1
-	//int displayUserIndex = 0;
-	//if (mNetworkManager->mIsServer)
-	//{
-	//	printf("\n\nUser List:");
-	//	while (data.usernameList[displayUserIndex] != "")
-	//	{
-	//		if (displayUserIndex == 0) //mention we're the server!
-	//		{
-	//			printf("\n%s%: %s", /*(std::string)*/data.myUsername, "SERVER!");
-	//		}
-	//		else
-	//		{
-	//			printf("\n%s", data.usernameList[displayUserIndex]);
-	//		}
-	//		displayUserIndex++;
-	//	}
-	//}
-
 	displayGameBoard(slotArray);
 
 	string controlSchemeTemp = "";
@@ -660,8 +642,9 @@ bool GameLocalState::validateMove()
 	return (slotData[slotIndex] == -1);
 }
 
-void GameLocalState::setMove()
+int GameLocalState::setMove()
 {
+	int tempSlot = slotIndex;
 	data.recentMessages[0] = "";
 	slotData[slotIndex] = playerTurn;
 	moveCounter++;
@@ -669,6 +652,18 @@ void GameLocalState::setMove()
 	playerTurn = 1 - playerTurn;
 	slotIndex = 0;
 	data.doesDisplay = 1;
+	return tempSlot;
+}
+
+//We've already validated our move
+//We've already set it on our screen
+//We've already set the turn to be the other player's on our instance
+//Now we need to send our completely valid move to them so they can also call setMove()
+//This will also make it so it becomes their turn and they can send a move
+//Alternatively, if the game ends, it will automatically detect that on both PEERS
+void GameLocalState::SendMoveToOpponent(int moveSlot)
+{
+	mNetworkManager->SendNetworkedMove(moveSlot);
 }
 
 void GameLocalState::checkForWin(unsigned int playerNum)

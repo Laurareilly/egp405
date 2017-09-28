@@ -2,7 +2,7 @@
 Project 1
 EGP 405-02
 Laura Reilly -- 0972157
-Robert Mitchell -- oh no
+Robert Mitchell -- 0935286
 
 We certify that this work is entirely our own.
 The assessor of this project may reproduce this
@@ -32,12 +32,14 @@ public:
 
 	virtual void display();
 	virtual char** getUsernameList() { return data.usernameList; }
-	virtual void SetSystemAddress(SystemAddress cAddress) {data.serverSystemAddress = cAddress;}
-	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
+	virtual void SetPeerAddress(SystemAddress cAddress) {data.peerSystemAddress = cAddress;}
+	virtual SystemAddress GetPeerAddress() { return data.peerSystemAddress; }
 	virtual void SetClientID(int cID) { data.clientID = cID; }
 	virtual void ReceiveMessage(char* cUser, char* cMessage, int cMsgType = 0) {};
 
 	virtual int getIsLocal() { return data.isLocal; }
+
+	virtual void ReceiveSlotInput(int cSlot) {};
 
 	virtual void insertUsernameIntoList(char* cName, int cIndex) {};
 	virtual int getNextOpenUsernameIndex() { return -1; };
@@ -52,14 +54,14 @@ public:
 		data.doesDisplay = 1;
 		data.doesUpdateInput = 1;
 		data.doesUpdateNetworking = 0;
-		data.doesUpdateState = 1;
+		data.doesUpdateState = 0;
 		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
 		data.headerMessage = "Welcome to UDPalooza!";
 		mNetworkManager = passData->mNetworkManager;
 		data.clientID = passData->data.clientID;
-		data.serverSystemAddress = passData->data.serverSystemAddress;
+		data.peerSystemAddress = passData->data.peerSystemAddress;
 	}
 
 	virtual void goToNextState(ApplicationState *passData);

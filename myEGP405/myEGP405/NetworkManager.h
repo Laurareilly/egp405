@@ -4,7 +4,7 @@
 Project 1
 EGP 405-02
 Laura Reilly -- 0972157
-Robert Mitchell -- oh no
+Robert Mitchell -- 0935286
 
 We certify that this work is entirely our own.
 The assessor of this project may reproduce this
@@ -33,6 +33,7 @@ public:
 	void updateServer();
 
 	void SendNetworkedMessage(char* cMessage, int cSenderID);
+	void SendNetworkedMove(int cMoveSlot);
 
 	//void updateClient();
 
@@ -61,7 +62,9 @@ public:
 		ID_RECEIVE_MESSAGE,			//Server received ID_CtS, and determined that the message isn't a DM. This is then sent by server, and interpreted by clients
 		ID_RECEIVE_DIRECT_MESSAGE,	//Server received ID_CtS, and determined it was a DM. This is sent back to the sender, and is sent to the recipient of the DM (PURPLE)
 		ID_SERVER_MESSAGE,			//Sent by Server, received by Clients, displayed in all red
-		ID_CLIENT_LEAVE
+		ID_CLIENT_LEAVE,
+
+		ID_SEND_MOVE, //send by either peer, contains int that corresponds to slot in table
 	};
 
 	enum RoomState

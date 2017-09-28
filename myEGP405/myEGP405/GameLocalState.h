@@ -12,7 +12,7 @@ and/or communicate a copy of this project to a plagiarism
 */
 
 
-#ifndef  _GAMELOCALSTATE_H
+#ifndef  _GAMELOCALSTATE_HpeerSystemAddress
 #define  _GAMELOCALSTATE_H
 
 #include "ApplicationState.h"
@@ -30,8 +30,8 @@ public:
 	virtual char** getUsernameList() { return data.usernameList; }
 	virtual int getNextOpenUsernameIndex();
 	virtual void insertUsernameIntoList(char cName[31], int cIndex);
-	virtual void SetSystemAddress(SystemAddress cAddress) { data.serverSystemAddress = cAddress; }
-	virtual SystemAddress GetSystemAddress() { return data.serverSystemAddress; }
+	virtual void SetPeerAddress(SystemAddress cAddress) { data.peerSystemAddress = cAddress; }
+	virtual SystemAddress GetPeerAddress() { return data.peerSystemAddress; }
 
 	virtual int getIsLocal() { return data.isLocal; }
 
@@ -51,7 +51,7 @@ public:
 		data.doesDisplay = 1;
 		data.doesUpdateInput = 1;
 		data.doesUpdateNetworking = 1;
-		data.doesUpdateState = 1;
+		data.doesUpdateState = 0;
 		strcpy(data.myUsername, passData->data.myUsername);
 		data.portNumber = passData->data.portNumber;
 		data.ipAddress = passData->data.ipAddress;
@@ -61,7 +61,7 @@ public:
 			data.headerMessage = "Youre in-game!\nWASD to choose slot on game board\nPress Enter to Confirm Move\nPress ESC to return to lobby\nPress SHIFT+ESC to quit application";
 		mNetworkManager = passData->mNetworkManager;
 		data.clientID = passData->data.clientID;
-		data.serverSystemAddress = passData->data.serverSystemAddress;
+		data.peerSystemAddress = passData->data.peerSystemAddress;
 		if (mNetworkManager->mIsServer)
 		{
 			data.clientID = 0;
@@ -74,6 +74,7 @@ public:
 	virtual void processMessage();
 	virtual void PushMessageIntoQueue();
 	virtual void PushMessageIntoQueue(std::string newMessage);
+	virtual void SendMoveToOpponent(int moveSlot);
 
 	virtual void ClearScreen();
 	virtual char NumberToSymbol(char numChar);
@@ -90,11 +91,12 @@ private:
 	void resetGame();
 
 	bool validateMove();
-	void setMove();
+	int setMove();
 	void checkForWin(unsigned int playerNum);
 
 	int slotIndex = 0; //read from left to right, top to bottom 0 - 8
 	unsigned int playerTurn = 0; //0 is player 1 ofc. In a networked game, compare to clientID for validating input
+	unsigned int startPlayerTurn = 0;
 	char slotArray[9];
 	int slotData[9];
 	unsigned int moveCounter;
